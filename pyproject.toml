@@ -1,0 +1,10 @@
+[project]
+name = "dev-placement-os"
+version = "0.1.0"
+description = "Python MVP for the DEV Placement OS adaptive DSA learning system"
+requires-python = ">=3.12,<3.13"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"

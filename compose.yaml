@@ -1,0 +1,21 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: dev-placement-os-db
+    environment:
+      POSTGRES_DB: dev_placement
+      POSTGRES_USER: dev_placement
+      POSTGRES_PASSWORD: dev_placement
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev_placement -d dev_placement"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
+
