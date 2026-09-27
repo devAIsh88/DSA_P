@@ -32,3 +32,15 @@ coverage.xml
 # OS files
 .DS_Store
 Thumbs.db
+
+# Environment variants; placeholder example remains public
+.env.*
+!.env.example
+
+# Private local agent instructions, research, and product planning
+/AGENTS.md
+/.agents/
+/docs/research/
+/DEV Placement OS.docx
+/DEV_Placement_OS_Python_MVP_Implementation_PRD_v0.1.docx
+/DEV_Placement_OS_Updated_PRD_v0.2.docx
