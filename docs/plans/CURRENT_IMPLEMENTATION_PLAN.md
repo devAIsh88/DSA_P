@@ -1,6 +1,6 @@
 # Current Implementation Plan
 
-This is the active engineering plan for the next two implementation increments. Product PRD v0.3 (`DEV Placement OS.docx`) governs long-term direction; the Python MVP Implementation PRD v0.1 governs MVP scope and order. The 4A/4B labels below split its Phase 4 (learning events) and Phase 5 (learner model) without changing that sequence. See `docs/architecture/LEARNER_EVIDENCE_AND_STATE.md` for the stable data boundary.
+This is the active engineering plan for Phase 4B. Product PRD v0.3 (`DEV Placement OS.docx`) governs long-term direction; the Python MVP Implementation PRD v0.1 governs MVP scope and order. The 4A/4B labels below split its Phase 4 (learning events) and Phase 5 (learner model) without changing that sequence. See `docs/architecture/LEARNER_EVIDENCE_AND_STATE.md` for the stable data boundary.
 
 ## Current State
 
@@ -12,7 +12,7 @@ This is the active engineering plan for the next two implementation increments. 
 
 ## Next Objective
 
-Phase 4A now supplies persistent learning evidence. Phase 4B learner-state work remains deferred until separately authorized. Preserve the full product flow: Problem → Attempt → Reasoning / learner actions → Submission → Execution → Deterministic Evaluation → Learning Event / Session Vault → Learner-State Update → Adaptive Decision → Next Activity. This plan does not authorize later tutor or adaptive features.
+Phase 4A now supplies persistent learning evidence and has been independently verified. Phase 4B is authorized and starts with single-skill BKT; the pure provider and versioned experimental parameters are complete. Next, persist SkillState and project only eligible Attempt completions with exactly one attributed skill. Preserve the full product flow: Problem → Attempt → Reasoning / learner actions → Submission → Execution → Deterministic Evaluation → Learning Event / Session Vault → Learner-State Update → Adaptive Decision → Next Activity. This plan does not authorize later tutor or adaptive features.
 
 ## Phase 4A — Learning Evidence / Session Vault
 
@@ -25,6 +25,8 @@ Implemented in migration `20260929_0004`. The active code stores canonical reaso
 - Define learner-safe request/response schemas, validation, ordering/idempotency behavior, and ownership boundaries for Attempt and event APIs during implementation review. Add focused model, lifecycle, event, integration, validation, and redaction tests using isolated provider mocks.
 
 ## Phase 4B — Learner Model / Knowledge Tracing
+
+Initial checkpoint: `KnowledgeTracingProvider` and pure BKT calculations are implemented with versioned parameters in `config/learner_model.json`. Current BKT accepts only binary, unassisted Attempt observations. Hint weighting and multi-skill attribution remain separate policy work; neither is inferred from a submission alone.
 
 - Add `SkillState` as a derived projection and `KnowledgeTracingProvider` as a replaceable boundary. Implement BKT first, with model parameters and versions recorded rather than embedded as permanent architectural truths. An LLM must not calculate or directly change mastery.
 - Update state from meaningful evidence: mastery probability and uncertainty, attempt and successful-attempt counts, independent solves, hint dependency, timing, recent errors, last attempt, and retention evidence where available. Preserve provenance for each derived observation and state transition.

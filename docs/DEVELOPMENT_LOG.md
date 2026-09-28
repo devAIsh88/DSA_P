@@ -86,6 +86,31 @@ This is a milestone-based engineering history. Append new entries in chronologic
 
 - Begin the authorized Phase 4B work with a single-skill BKT boundary and evidence-derived learner state. Multi-skill attribution remains an unresolved policy decision.
 
+## 2026-09-29 — Phase 4B pure BKT checkpoint
+
+### Completed
+
+- Added a database-independent `KnowledgeTracingProvider` contract and initial BKT provider for binary, unassisted Attempt observations.
+- Stored the experimental BKT parameters in a versioned configuration file. The provider calculates posterior mastery, applies the learning transition, clamps probabilities, and supports deterministic replay.
+
+### Decisions
+
+- Keep fractional hint weighting outside this first checkpoint. The current BKT provider rejects assisted or fractional observations instead of treating them as incorrect evidence. Multi-skill attribution remains unresolved.
+- BKT parameters are starting values for data collection, not calibrated measurements; tests pass fixed values explicitly.
+
+### Verification
+
+- Focused BKT tests: 9 passed, covering correct/incorrect observations, transition, bounds, invalid parameters, replay, and policy boundaries. Full regression suite: 36 passed, 1 opt-in live Judge0 test skipped, 8 warnings.
+- No schema change in this checkpoint.
+
+### Git
+
+- This milestone accompanies the pure BKT implementation commit on `main`; Git records the exact revision.
+
+### Next
+
+- Persist SkillState and project eligible, single-skill Attempt-completion evidence with replay and duplicate protection.
+
 ## Document Roles
 
 - `docs/PROJECT_STATUS.md` records current truth.

@@ -15,11 +15,11 @@
 
 ## Current
 
-Phase 4A is implemented. Attempt-linked APIs enforce the single-learner MVP assumption by rejecting ambiguous databases with multiple User rows. Authentication for a multi-user or public deployment remains outside this phase.
+Phase 4B is in progress. Pure single-skill BKT math and versioned experimental parameters are implemented; SkillState persistence and evidence-to-state integration are not yet implemented. Attempt-linked APIs enforce the single-learner MVP assumption by rejecting ambiguous databases with multiple User rows. Authentication for a multi-user or public deployment remains outside this phase.
 
 ## Next
 
-- Phase 4B — Learner Model / Knowledge Tracing (implementation PRD Phase 5).
+- Persist SkillState and connect eligible, single-skill Attempt completion evidence to deterministic BKT replay. Do not apply a multi-skill attribution policy without an accepted decision.
 
 ## Later
 

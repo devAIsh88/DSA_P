@@ -1,0 +1,11 @@
+{
+  "active_bkt_parameters": "experimental-v1",
+  "bkt_parameter_sets": {
+    "experimental-v1": {
+      "prior_mastery": 0.20,
+      "learn_rate": 0.10,
+      "slip": 0.15,
+      "guess": 0.25
+    }
+  }
+}
