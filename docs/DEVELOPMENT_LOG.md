@@ -62,6 +62,30 @@ This is a milestone-based engineering history. Append new entries in chronologic
 
 - Phase 4B Learner Model / Knowledge Tracing is the next planned increment, pending separate authorization.
 
+## 2026-09-29 — Independent Phase 4A verification and closure
+
+### Completed
+
+- Rechecked Attempt lifecycle, event persistence/order, idempotency, submission association, learner-safe serialization, hidden-test redaction, and the retained `ExecutionProvider` boundary against the implementation and tests.
+- Confirmed the Phase 4A migration follows `20260904_0003`; reviewed its downgrade operations without applying them to the existing local database.
+
+### Decisions
+
+- Normal services and APIs only append LearningEvents. Direct database mutation can bypass this contract; the current MVP does not require database triggers, so that limitation remains explicit.
+
+### Verification
+
+- Full suite: 27 passed, 1 opt-in live Judge0 test skipped, 8 warnings. Focused Phase 4A tests: 8 passed.
+- `alembic history` confirmed the revision chain; `alembic current` reported `20260929_0004 (head)`; `alembic upgrade head` succeeded; `alembic check` found no new upgrade operations.
+
+### Git
+
+- Phase 4A implementation: `f782a0a6fc35fa0875292d184d7850b1e0553aad` on `main`. Git history records this closure document's own commit.
+
+### Next
+
+- Begin the authorized Phase 4B work with a single-skill BKT boundary and evidence-derived learner state. Multi-skill attribution remains an unresolved policy decision.
+
 ## Document Roles
 
 - `docs/PROJECT_STATUS.md` records current truth.

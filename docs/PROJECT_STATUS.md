@@ -5,7 +5,7 @@
 - Phase 1 — Foundation.
 - Phase 2 — Problem catalogue.
 - Phase 3 — Execution/evaluation, including replaceable Judge0 execution, deterministic evaluation, persisted submissions/test results, and hidden-test redaction. Phase 3 migration is applied and tests passed, per the verified project state.
-- Phase 4A — Attempt lifecycle and persistent LearningEvent evidence. Migration `20260929_0004` is applied; the full test suite passed.
+- Phase 4A — Attempt lifecycle and persistent LearningEvent evidence. Independently verified on 2026-09-29: 27 tests passed, 1 opt-in Judge0 test skipped; Alembic is at `20260929_0004 (head)` with no schema drift. Event immutability is enforced by normal service/API behavior, not against direct database writes.
 
 ## Research Completed
 
