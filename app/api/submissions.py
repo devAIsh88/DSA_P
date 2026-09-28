@@ -5,8 +5,11 @@ from app.config import get_settings
 from app.db.session import get_db
 from app.schemas.submission import SubmissionCreate, SubmissionResultResponse
 from app.services.execution_service import ExecutionProvider, Judge0ExecutionService
+from app.services.attempt_service import LearnerIdentityError, LearnerNotFoundError
 from app.services.problem_service import ProblemNotFoundError
-from app.services.submission_service import create_submission
+from app.services.submission_service import (
+    SubmissionAttemptNotFoundError, SubmissionConflictError, create_submission,
+)
 
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 
@@ -27,3 +30,9 @@ async def submit_code(
         return await create_submission(db, payload, provider)
     except ProblemNotFoundError as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Problem not found") from error
+    except SubmissionAttemptNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attempt not found") from error
+    except SubmissionConflictError as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    except (LearnerIdentityError, LearnerNotFoundError) as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error

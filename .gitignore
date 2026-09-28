@@ -37,9 +37,7 @@ Thumbs.db
 .env.*
 !.env.example
 
-# Private local agent instructions, research, and product planning
-/AGENTS.md
-/.agents/
+# Private research and product planning
 /docs/research/
 /DEV Placement OS.docx
 /DEV_Placement_OS_Python_MVP_Implementation_PRD_v0.1.docx

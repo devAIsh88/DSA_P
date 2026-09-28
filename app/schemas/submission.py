@@ -7,6 +7,8 @@ from app.schemas.execution import ExecutionStatus
 
 class SubmissionCreate(BaseModel):
     problem_id: int = Field(gt=0)
+    attempt_id: int | None = Field(default=None, gt=0)
+    idempotency_key: str | None = Field(default=None, min_length=1, max_length=120)
     code: str = Field(min_length=1)
     language: str = "python3"
 
@@ -14,6 +16,8 @@ class SubmissionCreate(BaseModel):
     def only_python3(self) -> "SubmissionCreate":
         if self.language.lower() not in {"python3", "python"}:
             raise ValueError("Only Python 3 submissions are supported")
+        if self.idempotency_key is not None and self.attempt_id is None:
+            raise ValueError("Submission idempotency_key requires attempt_id")
         self.language = "python3"
         return self
 

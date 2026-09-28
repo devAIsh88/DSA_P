@@ -15,6 +15,7 @@ class Submission(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     problem_id: Mapped[int] = mapped_column(ForeignKey("problems.id", ondelete="CASCADE"), nullable=False, index=True)
+    attempt_id: Mapped[int | None] = mapped_column(ForeignKey("attempts.id"), nullable=True, index=True)
     language: Mapped[str] = mapped_column(String(30), nullable=False)
     source_code: Mapped[str] = mapped_column(Text, nullable=False)
     overall_status: Mapped[str] = mapped_column(String(40), nullable=False)
