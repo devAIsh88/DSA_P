@@ -111,6 +111,38 @@ This is a milestone-based engineering history. Append new entries in chronologic
 
 - Persist SkillState and project eligible, single-skill Attempt-completion evidence with replay and duplicate protection.
 
+## 2026-09-29 — Phase 4B single-skill evidence-to-state checkpoint
+
+### Completed
+
+- Added `ProblemSkill` mapping and persisted `SkillState` with mastery, uncertainty, attempt metrics, timing, model versions, and latest evidence-event reference. Added a read-only, allowlisted learner skill API.
+- On Attempt closure, captured a single skill in the immutable completion event when exactly one unit-weight mapping exists. The projection service replays eligible completion and prior evaluation events in event-ID order, then writes SkillState in the same transaction. Replaying or retrying cannot double-apply an observation.
+- Kept unmapped, multiply mapped, non-unit-weight, assisted, abandoned, and incomplete/system-error evidence out of the initial BKT projection. Event provenance records why mapping did not qualify. Actual hint actions are summarized in submission and completion evidence without inventing hint behavior.
+
+### Issues Encountered
+
+- An initial replay draft depended on mutable Attempt and Submission rows. It was changed to derive observations from historical LearningEvents and captured attribution.
+- A test exposed mixed naive and timezone-aware timestamps under SQLite. Replay now normalizes timestamps before comparison.
+
+### Decisions
+
+- `ProblemSkill.weight` is stored for future attribution work but is not applied to mastery; only a sole unit-weight mapping qualifies now. Multi-skill and fractional weighting remain unresolved.
+- Do not amend committed LearningEvent provenance with model output. Store projection provenance on SkillState and retain immutable source events for replay; this follows the higher-priority event-immutability decision over the conflicting research-contract clause.
+- No public replay or mapping-write route is exposed without an administrative authorization boundary. Recent-error and retention fields remain null until supported by evidence; hint metrics remain zero/null while assisted observations are deferred.
+
+### Verification
+
+- New Phase 4B integration tests: 7 passed. Full suite: 43 passed, 1 opt-in live Judge0 test skipped, 8 warnings. Coverage includes closure timing, multiple submissions, revisit, skill isolation, replay, duplicate protection, invalid evidence, rollback, ambiguous mappings, and learner-safe responses.
+- Alembic `20260929_0005` follows `20260929_0004`. On the confirmed localhost database, upgrade, downgrade with empty new tables, and re-upgrade succeeded. Final revision: `20260929_0005 (head)`; `alembic check` found no schema drift.
+
+### Git
+
+- This milestone accompanies the single-skill evidence-to-state implementation commit on `main`; Git records the exact revision.
+
+### Next
+
+- Define the versioned hint observation policy and reporting threshold, then process assisted evidence; establish mistake/retention labels from validated sources. Resolve multi-skill attribution separately before any multi-skill mastery update.
+
 ## Document Roles
 
 - `docs/PROJECT_STATUS.md` records current truth.

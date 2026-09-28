@@ -8,7 +8,7 @@ This repository contains the Python MVP for DEV Placement OS. Application code i
 
 Use, in order: (1) Product PRD v0.3 (`DEV Placement OS.docx`) for long-term direction; (2) Python MVP Implementation PRD v0.1 for MVP scope and implementation order; (3) accepted architecture/research contracts in `docs/`; (4) implemented architecture; (5) agent-specific instructions. A research artifact can refine implementation details but cannot override an explicit PRD requirement without review. Report genuine PRD contradictions before implementation. Read `docs/PROJECT_STATUS.md` and `docs/plans/CURRENT_IMPLEMENTATION_PLAN.md` for the active scope.
 
-Implementation Phases 1 (foundation), 2 (problem system), 3 (execution/evaluation), and 4A (Learning Evidence / Session Vault; implementation PRD Phase 4) are complete. Phase 4B (Learner Model / Knowledge Tracing; implementation PRD Phase 5) is in progress, beginning with single-skill BKT. Multi-skill attribution needs a separate accepted policy. Do not start tutor, adaptive recommendation, or UI work just because their interfaces appear in a PRD.
+Implementation Phases 1 (foundation), 2 (problem system), 3 (execution/evaluation), and 4A (Learning Evidence / Session Vault; implementation PRD Phase 4) are complete. Phase 4B (Learner Model / Knowledge Tracing; implementation PRD Phase 5) is in progress: single-skill BKT and SkillState persistence exist. Assisted observations and multi-skill attribution need separate accepted policies. Do not start tutor, adaptive recommendation, or UI work just because their interfaces appear in a PRD.
 
 ## Product and Evidence Boundaries
 

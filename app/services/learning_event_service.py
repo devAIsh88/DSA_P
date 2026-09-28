@@ -126,6 +126,21 @@ def list_events(db: Session, attempt_id: int) -> list[LearningEvent]:
     ))
 
 
+def hint_summary(db: Session, attempt_id: int) -> tuple[int, int]:
+    """Summarize recorded hint actions without inferring assistance from an LLM."""
+
+    hints = list(db.scalars(select(LearningEvent).where(
+        LearningEvent.attempt_id == attempt_id,
+        LearningEvent.event_type.in_((LearningEventType.HINT_REQUESTED.value,
+                                      LearningEventType.HINT_DELIVERED.value)),
+    )))
+    requested = sum(item.event_type == LearningEventType.HINT_REQUESTED.value for item in hints)
+    delivered_levels = [item.evidence.get("hint_level_delivered") for item in hints
+                        if item.event_type == LearningEventType.HINT_DELIVERED.value]
+    valid_levels = [level for level in delivered_levels if isinstance(level, int) and 0 <= level <= 6]
+    return requested, max(valid_levels, default=0)
+
+
 def to_learner_event(event: LearningEvent) -> LearningEventResponse:
     """Allowlist event evidence; never expose labels, provenance, or private test details."""
 

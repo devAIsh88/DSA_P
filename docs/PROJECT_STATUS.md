@@ -15,11 +15,11 @@
 
 ## Current
 
-Phase 4B is in progress. Pure single-skill BKT math and versioned experimental parameters are implemented; SkillState persistence and evidence-to-state integration are not yet implemented. Attempt-linked APIs enforce the single-learner MVP assumption by rejecting ambiguous databases with multiple User rows. Authentication for a multi-user or public deployment remains outside this phase.
+Phase 4B is in progress. The first single-skill slice now persists `SkillState` from eligible, unassisted `ATTEMPT_COMPLETED` events using versioned BKT parameters and deterministic replay. `ProblemSkill` mappings are curated; only one mapping with unit weight qualifies. Migration `20260929_0005` is applied locally, upgrade/downgrade/upgrade passed, and the full suite passed (43 passed, 1 opt-in Judge0 test skipped). Attempt-linked and learner-state APIs reject ambiguous databases with multiple User rows. Authentication for a multi-user or public deployment remains outside this phase.
 
 ## Next
 
-- Persist SkillState and connect eligible, single-skill Attempt completion evidence to deterministic BKT replay. Do not apply a multi-skill attribution policy without an accepted decision.
+- Define and validate hint observation/metric policy before processing assisted Attempts. Add mistake and retention evidence only when their source rules are established. Multi-skill attribution remains an unresolved decision; do not infer weights.
 
 ## Later
 

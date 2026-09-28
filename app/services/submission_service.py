@@ -14,7 +14,7 @@ from app.schemas.submission import SubmissionCreate, SubmissionResultResponse, T
 from app.services.evaluation_service import EvaluationService
 from app.services.execution_service import ExecutionProvider
 from app.services.attempt_service import ensure_attempt_owner
-from app.services.learning_event_service import append_event, event_by_key, lock_attempt
+from app.services.learning_event_service import append_event, event_by_key, hint_summary, lock_attempt
 from app.services.problem_service import ProblemNotFoundError
 
 
@@ -127,6 +127,7 @@ async def create_submission(
             stdout=result.execution.stdout,
         ))
     if payload.attempt_id is not None:
+        hint_count, max_hint_level = hint_summary(db, payload.attempt_id)
         append_event(
             db, payload.attempt_id, LearningEventType.SUBMISSION_EVALUATED,
             {"schema_version": 1, "submission_id": submission.id,
@@ -134,7 +135,8 @@ async def create_submission(
              "tests_passed": evaluation.tests_passed, "tests_total": evaluation.tests_total,
              "edge_cases_failed": evaluation.edge_cases_failed,
              "execution_time_ms": evaluation.execution_time_ms,
-             "hint_count_at_submission": 0, "max_hint_level_at_submission": 0},
+             "hint_count_at_submission": hint_count,
+             "max_hint_level_at_submission": max_hint_level},
             {"source": EvidenceSource.EXECUTION_EVALUATION_ENGINE.value,
              "submission_id": submission.id,
              "evaluation": {"source": EvidenceSource.DETERMINISTIC_RULE.value,

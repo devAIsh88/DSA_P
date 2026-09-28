@@ -33,3 +33,11 @@ Use a replaceable `KnowledgeTracingProvider` boundary. BKT is the initial MVP im
 ## Replay Principle
 
 Retain event history so learner state can be recomputed when model parameters, the tracing algorithm, skill attribution, or a derived label changes. Given the same event history, model version, parameters, and attribution rules, replay should reproduce the same SkillState. Corrections must preserve the original raw evidence and the provenance of the revised interpretation.
+
+## Initial Phase 4B Projection Boundary
+
+The initial implementation snapshots a single `skill_id` on `ATTEMPT_COMPLETED` when a problem has exactly one `ProblemSkill` mapping with unit weight. The event records the attribution rule and status in provenance at creation. Unmapped, multiply mapped, and non-unit mappings remain historical Attempts without a mastery update. The mapping weight is not used to calculate BKT credit.
+
+The projection reads ordered completion events and their prior `SUBMISSION_EVALUATED` events, not mutable Attempt or Submission fields. Only completed, unassisted `SOLVED` or `GAVE_UP` evidence with valid deterministic evaluation context enters the initial binary BKT provider. Intermediate submissions and abandoned Attempts do not update mastery. Assisted Attempts await a versioned hint policy; no hint is reclassified as failure by default.
+
+SkillState stores the latest source event ID plus model, parameter, observation-rule, and attribution-rule versions. Replaying the same event IDs with the same versions and parameters reproduces mastery and counts; model changes rebuild the projection. Completion evidence and projection write in one transaction, with learner-row locking for concurrent updates. BKT parameters are versioned experimental configuration, not calibrated truth. Projection metadata is stored in SkillState; committed LearningEvent provenance is never rewritten to record a later state calculation.

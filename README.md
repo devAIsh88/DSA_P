@@ -55,8 +55,12 @@
 - **Problem Catalog & Hidden Cases:** Exposes public problem metadata and sample test cases to users while securely isolating hidden evaluation test cases.
 - **Isolated Code Execution:** Integrates an abstract execution provider interface with a concrete Judge0 implementation, strictly separating user-submitted code from backend host resources.
 - **Automated Evaluation Pipeline:** Evaluates status codes (Accepted, Wrong Answer, Time Limit Exceeded, Memory Limit Exceeded, Runtime Error) and aggregates memory/runtime statistics.
+- **Learning Evidence:** Groups reasoning and multiple submissions in an Attempt, then records ordered, append-only LearningEvents with learner-safe views.
+- **Initial Learner Model:** Replays eligible single-skill Attempt completions through a replaceable BKT provider into persisted SkillState. Experimental parameters are versioned in `config/learner_model.json`.
 - **Relational & Vector Data Storage:** Built on PostgreSQL 16 with `pgvector` for upcoming semantic question retrieval and embeddings-based skill recommendations.
 - **Alembic Database Migrations:** Version-controlled database revisions for seamless schema evolution.
+
+Phase 4B is in progress. Skill mappings must be curated; only one unit-weight skill mapping currently produces mastery evidence. Assisted Attempts and multi-skill attribution await explicit policies. No public mapping-write or administrative replay endpoint is available.
 
 ---
 
@@ -66,32 +70,48 @@
 DSA_P/
 ├── app/
 │   ├── api/                 # API route controllers
+│   │   ├── attempts.py      # Attempt lifecycle and evidence retrieval
 │   │   ├── health.py        # Service health checks
+│   │   ├── learner.py       # Read-only skill state
 │   │   ├── problems.py      # Problem catalog endpoints
 │   │   └── submissions.py   # Code submission & evaluation endpoints
 │   ├── db/                  # Database connectivity and session lifecycle
 │   │   ├── base.py          # Declarative Base
 │   │   └── session.py       # Engine and sessionmaker
 │   ├── models/              # SQLAlchemy 2.0 ORM entities
+│   │   ├── attempt.py       # Learner engagement
+│   │   ├── learning_event.py # Historical evidence
 │   │   ├── problem.py       # Problems & difficulty definitions
-│   │   ├── skill.py         # Skill taxonomy & tag mappings
+│   │   ├── problem_skill.py # Curated problem-to-skill mapping
+│   │   ├── skill.py         # Skill taxonomy
+│   │   ├── skill_state.py   # Derived learner state
 │   │   ├── submission.py    # User code submissions
 │   │   ├── test_case.py     # Public & private test cases
 │   │   ├── test_result.py   # Per-case evaluation outputs
-│   │   └── user.py          # User accounts & auth records
+│   │   └── user.py          # Single-learner record
 │   ├── schemas/             # Pydantic v2 validation contracts
+│   │   ├── attempt.py       # Attempt requests and responses
 │   │   ├── execution.py     # Judge0 execution schemas
 │   │   ├── health.py        # Health response schema
+│   │   ├── learning_event.py # Learner-safe evidence responses
 │   │   ├── problem.py       # Problem request/response models
+│   │   ├── skill_state.py   # Learner-safe state responses
 │   │   └── submission.py    # Submission payloads & results
 │   ├── services/            # Core business & evaluation logic
+│   │   ├── attempt_service.py # Attempt lifecycle
+│   │   ├── bkt_provider.py  # Pure BKT implementation
 │   │   ├── evaluation_service.py # Verdict resolution & scoring
 │   │   ├── execution_service.py  # Sandboxed execution interface
+│   │   ├── knowledge_tracing.py # Replaceable tracing contract
+│   │   ├── learner_state_service.py # Evidence replay and projection
+│   │   ├── learning_event_service.py # Event append and safe serialization
 │   │   ├── problem_service.py    # Problem queries & retrieval
 │   │   └── submission_service.py # Submission lifecycle management
 │   ├── config.py            # Pydantic Settings configuration
 │   └── main.py              # Application entrypoint & middleware
 ├── compose.yaml             # Docker Compose for PostgreSQL + pgvector
+├── config/                  # Versioned experimental learner-model parameters
+├── docs/                    # Status, plan, architecture, and development log
 ├── migrations/              # Alembic migration scripts
 ├── tests/                   # Pytest test suite with TestClient
 ├── pyproject.toml           # Project metadata
@@ -154,6 +174,14 @@ DSA_P/
 | `GET` | `/problems` | List available coding problems |
 | `GET` | `/problems/{problem_id}` | Retrieve problem details & public sample cases |
 | `POST` | `/submissions` | Submit solution for execution & evaluation |
+| `POST` | `/attempts/start` | Start a learner engagement |
+| `POST` | `/attempts/{attempt_id}/reasoning` | Record reasoning as event evidence |
+| `GET` | `/attempts/{attempt_id}` | Read Attempt metadata |
+| `POST` | `/attempts/{attempt_id}/complete` | Close with an outcome |
+| `POST` | `/attempts/{attempt_id}/abandon` | Abandon an Attempt |
+| `GET` | `/attempts/{attempt_id}/events` | Read allowlisted historical evidence |
+| `GET` | `/learner/skills` | List derived skill states |
+| `GET` | `/learner/skills/{skill_id}` | Read one derived skill state |
 
 Interactive documentation is available at `http://127.0.0.1:8000/docs` (Swagger UI) and `http://127.0.0.1:8000/redoc`.
 

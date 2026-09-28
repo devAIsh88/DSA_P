@@ -14,7 +14,10 @@ from app.models.submission import Submission
 from app.models.user import User
 from app.schemas.attempt import AttemptComplete, AttemptOutcome, AttemptStart, ReasoningCreate
 from app.schemas.learning_event import EvidenceSource, LearningEventType
-from app.services.learning_event_service import append_event, event_by_key, lock_attempt
+from app.services.learning_event_service import append_event, event_by_key, hint_summary, lock_attempt
+from app.services.learner_state_service import (
+    ATTRIBUTION_RULE_VERSION, project_completion_event, single_skill_for_problem,
+)
 
 
 class AttemptNotFoundError(Exception):
@@ -183,16 +186,22 @@ def _close_attempt(db: Session, attempt_id: int, status: str, outcome: AttemptOu
     attempt.completed_at = now
     attempt.total_duration_ms = _elapsed_ms(attempt.started_at, now)
     db.flush()
-    append_event(
+    hint_count, max_hint_level = hint_summary(db, attempt.id)
+    skill_id, attribution_status = single_skill_for_problem(db, attempt.problem_id)
+    event = append_event(
         db, attempt.id, LearningEventType.ATTEMPT_COMPLETED,
         {"schema_version": 1, "status": status, "outcome": attempt.outcome,
          "final_submission_id": final_submission.id if final_submission else None,
-         "total_duration_ms": attempt.total_duration_ms, "hint_count": 0, "max_hint_level": 0},
+         "total_duration_ms": attempt.total_duration_ms, "hint_count": hint_count,
+         "max_hint_level": max_hint_level},
         {"source": EvidenceSource.LEARNER.value, "user_id": attempt.user_id,
          "validation": {"source": EvidenceSource.DETERMINISTIC_RULE.value,
-                        "rule_id": "attempt_close_v1"}},
+                        "rule_id": "attempt_close_v1"},
+         "attribution": {"rule_version": ATTRIBUTION_RULE_VERSION, "status": attribution_status}},
+        skill_id=skill_id,
         idempotency_key=key,
     )
+    project_completion_event(db, event)
     db.commit()
     return attempt
 
