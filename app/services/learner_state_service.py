@@ -16,7 +16,7 @@ from app.services.bkt_provider import BKTProvider, load_bkt_parameters
 from app.services.knowledge_tracing import KnowledgeTracingProvider, TracingObservation
 
 
-OBSERVATION_RULE_VERSION = "attempt-completion-binary-v1"
+OBSERVATION_RULE_VERSION = "attempt-completion-binary-reporting-v1"
 ATTRIBUTION_RULE_VERSION = "single-skill-v1"
 _HINT_TYPES = (LearningEventType.HINT_REQUESTED.value, LearningEventType.HINT_DELIVERED.value)
 
@@ -104,10 +104,43 @@ def _eligible_observation(db: Session, event: LearningEvent) -> TracingObservati
                               occurred_at=event.occurred_at)
 
 
+def _reportable_completion(event: LearningEvent) -> bool:
+    """Accept terminal evidence captured under the single-skill v1 attribution rule."""
+
+    if event.event_type != LearningEventType.ATTEMPT_COMPLETED.value or event.skill_id is None:
+        return False
+    provenance = event.provenance if isinstance(event.provenance, dict) else {}
+    attribution = provenance.get("attribution")
+    if (not isinstance(attribution, dict) or attribution.get("rule_version") != ATTRIBUTION_RULE_VERSION
+            or attribution.get("status") != "single_skill"):
+        return False
+    status = event.evidence.get("status")
+    outcome = event.evidence.get("outcome")
+    return ((status == "COMPLETED" and outcome in ("SOLVED", "GAVE_UP"))
+            or (status == "ABANDONED" and outcome is None))
+
+
+def _hint_reporting(db: Session, completion: LearningEvent) -> tuple[int, list[int], bool]:
+    """Count requests and delivered levels before closure as separate raw signals."""
+
+    hints = list(db.scalars(select(LearningEvent).where(
+        LearningEvent.attempt_id == completion.attempt_id,
+        LearningEvent.user_id == completion.user_id,
+        LearningEvent.problem_id == completion.problem_id,
+        LearningEvent.attempt_sequence < completion.attempt_sequence,
+        LearningEvent.event_type.in_(_HINT_TYPES),
+    )))
+    requests = sum(hint.event_type == LearningEventType.HINT_REQUESTED.value for hint in hints)
+    levels = [level for hint in hints if hint.event_type == LearningEventType.HINT_DELIVERED.value
+              for level in [hint.evidence.get("hint_level_delivered")]
+              if type(level) is int and 1 <= level <= 6]
+    return requests, levels, bool(hints)
+
+
 def rebuild_skill_state(
     db: Session, user_id: int, skill_id: int, provider: KnowledgeTracingProvider | None = None,
 ) -> SkillState | None:
-    """Recompute from ordered events, so retries cannot apply the same evidence twice."""
+    """Replay terminal reporting and eligible binary observations independently."""
 
     db.scalar(select(User.id).where(User.id == user_id).with_for_update())
     tracer = provider if provider is not None else BKTProvider(load_bkt_parameters())
@@ -119,27 +152,40 @@ def rebuild_skill_state(
         ).order_by(LearningEvent.id)
     ))
     observations: list[TracingObservation] = []
-    eligible_events: list[LearningEvent] = []
+    reporting_events: list[LearningEvent] = []
     durations: list[int] = []
+    delivered_levels: list[int] = []
+    hint_count_total = 0
+    successful_attempt_count = 0
+    independent_solve_count = 0
+    hint_dependent_count = 0
     seen_attempts: set[int] = set()
     for event in events:
-        if event.attempt_id in seen_attempts:
-            continue
-        observation = _eligible_observation(db, event)
-        if observation is None:
+        if event.attempt_id in seen_attempts or not _reportable_completion(event):
             continue
         seen_attempts.add(event.attempt_id)
-        observations.append(observation)
-        eligible_events.append(event)
+        reporting_events.append(event)
+        observation = _eligible_observation(db, event)
+        if observation is not None:
+            observations.append(observation)
+        requests, levels, has_hint_action = _hint_reporting(db, event)
+        hint_count_total += requests
+        delivered_levels.extend(levels)
+        if event.evidence.get("outcome") == "SOLVED":
+            successful_attempt_count += 1
+            if has_hint_action:
+                hint_dependent_count += 1
+            else:
+                independent_solve_count += 1
         duration_ms = event.evidence.get("total_duration_ms")
         if isinstance(duration_ms, int) and not isinstance(duration_ms, bool) and duration_ms >= 0:
             durations.append(duration_ms)
-    if not observations:
+    if not reporting_events:
         return None
 
     snapshot = tracer.replay_skill_state(observations)
-    last_event = eligible_events[-1]
-    last_successful = max((_utc_time(event.occurred_at) for event in eligible_events
+    last_event = reporting_events[-1]
+    last_successful = max((_utc_time(event.occurred_at) for event in reporting_events
                            if event.evidence["outcome"] == "SOLVED"), default=None)
     state = db.get(SkillState, (user_id, skill_id))
     if state is None:
@@ -147,15 +193,15 @@ def rebuild_skill_state(
         db.add(state)
     state.mastery_probability = snapshot.mastery_probability
     state.mastery_uncertainty = snapshot.mastery_uncertainty
-    state.attempt_count = snapshot.attempt_count
-    state.successful_attempt_count = snapshot.successful_attempt_count
-    state.independent_solve_count = snapshot.independent_solve_count
-    state.hint_dependent_count = snapshot.hint_dependent_count
-    state.hint_count_total = snapshot.hint_count_total
-    state.average_hint_level = None
+    state.attempt_count = len(reporting_events)
+    state.successful_attempt_count = successful_attempt_count
+    state.independent_solve_count = independent_solve_count
+    state.hint_dependent_count = hint_dependent_count
+    state.hint_count_total = hint_count_total
+    state.average_hint_level = (sum(delivered_levels) / len(delivered_levels) if delivered_levels else None)
     state.average_duration_ms = sum(durations) / len(durations) if durations else None
     state.recent_error_types = None
-    state.last_attempt_at = max(_utc_time(event.occurred_at) for event in eligible_events)
+    state.last_attempt_at = max(_utc_time(event.occurred_at) for event in reporting_events)
     state.last_successful_at = last_successful
     state.retention_signal = None
     state.last_evidence_event_id = last_event.id

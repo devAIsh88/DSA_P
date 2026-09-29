@@ -159,6 +159,35 @@ This is a milestone-based engineering history. Append new entries in chronologic
 
 - Implement and verify replayable assistance reporting, including assisted-only histories, without a migration or new public hint API.
 
+### Git
+
+- `1f79d55 docs: freeze conservative Phase 4B learner-model policy` on `main`. Git remains the source for remote synchronization status.
+
+## 2026-09-29 — Phase 4B v1 assistance reporting
+
+### Completed
+
+- Rebuilt single-skill `SkillState` reporting from terminal historical events independently of BKT observation eligibility. Assisted-only and abandoned Attempts now retain descriptive state at the configured mastery prior.
+- Counted hint requests separately from delivered hint levels; reported hint-associated successful Attempts and replayed repeated Attempts without editing source events. Existing binary BKT and multi-skill deferral gates remain intact.
+
+### Decisions
+
+- Kept `hint_count_total` as request count and `average_hint_level` as the mean of valid delivered levels. `hint_dependent_count` describes successful Attempts with any recorded request or delivery, without implying a mastery penalty.
+- Versioned the combined observation/reporting projection rule as `attempt-completion-binary-reporting-v1`. Fractional BKT and weighted multi-skill credit remain research only.
+
+### Verification
+
+- Focused learner-state/BKT suite: 18 passed. Complete suite: 45 passed, 1 opt-in Judge0 test skipped, 8 warnings. New coverage checks assisted SOLVED and GAVE_UP, multiple hints, request versus delivery counts, assisted-only reporting, repeated replay, and unchanged historical evidence.
+- PostgreSQL Alembic current revision: `20260929_0005 (head)`. `alembic check` reported no new upgrade operations. No migration was created or applied for this reporting change.
+
+### Git
+
+- The implementation checkpoint commit and push result are recorded in Git; this entry describes the verified engineering milestone without duplicating source history.
+
+### Next
+
+- Evaluate reporting and mastery estimates using preserved evidence before accepting further observation policies. Multi-skill attribution, mistake and retention rules, tutor, adaptive engine, and UI remain outside this checkpoint.
+
 ## Document Roles
 
 - `docs/PROJECT_STATUS.md` records current truth.

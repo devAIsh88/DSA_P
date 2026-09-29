@@ -115,6 +115,17 @@ def submit(client: TestClient, attempt_id: int, problem_id: int = 1, *, key: str
     return response.json()["submission_id"]
 
 
+def record_hint(factory: sessionmaker[Session], attempt_id: int, event_type: LearningEventType,
+                level: int) -> None:
+    evidence_key = ("hint_level_requested" if event_type is LearningEventType.HINT_REQUESTED
+                    else "hint_level_delivered")
+    source = "learner" if event_type is LearningEventType.HINT_REQUESTED else "deterministic_rule"
+    with factory() as db:
+        append_event(db, attempt_id, event_type,
+                     {"schema_version": 1, evidence_key: level}, {"source": source})
+        db.commit()
+
+
 def test_submission_waits_for_completion_then_projects_once(learner_db) -> None:
     client, factory, provider = learner_db
     map_skill(factory, 1, 1)
@@ -209,7 +220,7 @@ def test_revisit_and_skill_isolation_with_incorrect_observation(learner_db) -> N
         assert db.scalar(select(func.count()).select_from(SkillState)) == 2
 
 
-def test_unmapped_multiskill_abandoned_and_assisted_attempts_do_not_project(learner_db) -> None:
+def test_ambiguous_mappings_defer_projection_but_assisted_and_abandoned_report(learner_db) -> None:
     client, factory, _provider = learner_db
     unmapped = start(client, problem_id=3)
     assert client.post(f"/attempts/{unmapped}/complete", json={"outcome": "GAVE_UP"}).status_code == 200
@@ -222,17 +233,20 @@ def test_unmapped_multiskill_abandoned_and_assisted_attempts_do_not_project(lear
     map_skill(factory, 2, 2)
     ambiguous = start(client, problem_id=2)
     assert client.post(f"/attempts/{ambiguous}/complete", json={"outcome": "GAVE_UP"}).status_code == 200
+    assert client.get("/learner/skills").json() == []
 
     map_skill(factory, 1, 1)
     abandoned = start(client)
     assert client.post(f"/attempts/{abandoned}/abandon").status_code == 200
     assisted = start(client)
-    with factory() as db:
-        append_event(db, assisted, LearningEventType.HINT_REQUESTED,
-                     {"schema_version": 1, "hint_level_requested": 1}, {"source": "learner"})
-        db.commit()
+    record_hint(factory, assisted, LearningEventType.HINT_REQUESTED, 1)
     assert client.post(f"/attempts/{assisted}/complete", json={"outcome": "GAVE_UP"}).status_code == 200
-    assert client.get("/learner/skills").json() == []
+    state = client.get("/learner/skills/1").json()
+    assert state["mastery_probability"] == pytest.approx(0.2)
+    assert state["attempt_count"] == 2
+    assert state["successful_attempt_count"] == 0
+    assert state["hint_count_total"] == 1
+    assert state["average_hint_level"] is None
     with factory() as db:
         completion = db.scalar(select(LearningEvent).where(
             LearningEvent.attempt_id == ambiguous,
@@ -250,7 +264,7 @@ def test_unmapped_multiskill_abandoned_and_assisted_attempts_do_not_project(lear
             LearningEvent.event_type == LearningEventType.ATTEMPT_COMPLETED.value,
         ))
         assert assisted_completion.evidence["hint_count"] == 1
-        assert db.scalar(select(func.count()).select_from(SkillState)) == 0
+        assert db.scalar(select(func.count()).select_from(SkillState)) == 1
 
 
 def test_system_error_and_invalid_solved_attempt_do_not_update_mastery(learner_db) -> None:
@@ -261,7 +275,85 @@ def test_system_error_and_invalid_solved_attempt_do_not_update_mastery(learner_d
     provider.mode = "system_error"
     submit(client, attempt_id)
     assert client.post(f"/attempts/{attempt_id}/complete", json={"outcome": "GAVE_UP"}).status_code == 200
-    assert client.get("/learner/skills").json() == []
+    state = client.get("/learner/skills/1").json()
+    assert state["mastery_probability"] == pytest.approx(0.2)
+    assert state["attempt_count"] == 1
+
+
+def test_assisted_only_reporting_replays_requests_deliveries_and_outcomes(learner_db) -> None:
+    client, factory, _provider = learner_db
+    map_skill(factory, 1, 1)
+    solved = start(client)
+    record_hint(factory, solved, LearningEventType.HINT_REQUESTED, 1)
+    record_hint(factory, solved, LearningEventType.HINT_REQUESTED, 2)
+    record_hint(factory, solved, LearningEventType.HINT_REQUESTED, 4)
+    record_hint(factory, solved, LearningEventType.HINT_DELIVERED, 1)
+    record_hint(factory, solved, LearningEventType.HINT_DELIVERED, 4)
+    submit(client, solved)
+    assert client.post(f"/attempts/{solved}/complete", json={"outcome": "SOLVED"}).status_code == 200
+
+    first = client.get("/learner/skills/1").json()
+    assert first["mastery_probability"] == pytest.approx(0.2)
+    assert first["attempt_count"] == 1
+    assert first["successful_attempt_count"] == 1
+    assert first["independent_solve_count"] == 0
+    assert first["hint_dependent_count"] == 1
+    assert first["hint_count_total"] == 3
+    assert first["average_hint_level"] == pytest.approx(2.5)
+    with factory() as db:
+        completion = db.scalar(select(LearningEvent).where(
+            LearningEvent.attempt_id == solved,
+            LearningEvent.event_type == LearningEventType.ATTEMPT_COMPLETED.value,
+        ))
+        assert completion.evidence["hint_count"] == 3
+        assert completion.evidence["max_hint_level"] == 4
+
+    gave_up = start(client)
+    record_hint(factory, gave_up, LearningEventType.HINT_DELIVERED, 6)
+    assert client.post(f"/attempts/{gave_up}/complete", json={"outcome": "GAVE_UP"}).status_code == 200
+    second = client.get("/learner/skills/1").json()
+    assert second["mastery_probability"] == pytest.approx(0.2)
+    assert second["attempt_count"] == 2
+    assert second["successful_attempt_count"] == 1
+    assert second["hint_dependent_count"] == 1
+    assert second["hint_count_total"] == 3
+    assert second["average_hint_level"] == pytest.approx(11 / 3)
+
+    with factory() as db:
+        events = list(db.scalars(select(LearningEvent).where(
+            LearningEvent.attempt_id.in_((solved, gave_up)),
+        ).order_by(LearningEvent.id)))
+        history = [(item.id, item.evidence.copy(), item.provenance.copy()) for item in events]
+        state = db.get(SkillState, (1, 1))
+        before = (state.mastery_probability, state.attempt_count, state.hint_count_total,
+                  state.average_hint_level, state.observation_rule_version)
+        assert state.observation_rule_version == "attempt-completion-binary-reporting-v1"
+        assert state.attribution_rule_version == "single-skill-v1"
+        rebuild_skill_state(db, 1, 1)
+        rebuild_skill_state(db, 1, 1)
+        db.commit()
+        db.refresh(state)
+        assert before == (state.mastery_probability, state.attempt_count, state.hint_count_total,
+                          state.average_hint_level, state.observation_rule_version)
+        assert history == [(item.id, item.evidence, item.provenance) for item in events]
+
+
+def test_assisted_revisit_does_not_change_independent_mastery(learner_db) -> None:
+    client, factory, _provider = learner_db
+    map_skill(factory, 1, 1)
+    independent = start(client)
+    submit(client, independent)
+    assert client.post(f"/attempts/{independent}/complete", json={"outcome": "SOLVED"}).status_code == 200
+    prior = client.get("/learner/skills/1").json()["mastery_probability"]
+
+    assisted = start(client)
+    record_hint(factory, assisted, LearningEventType.HINT_REQUESTED, 2)
+    assert client.post(f"/attempts/{assisted}/complete", json={"outcome": "GAVE_UP"}).status_code == 200
+    state = client.get("/learner/skills/1").json()
+    assert state["mastery_probability"] == prior
+    assert state["attempt_count"] == 2
+    assert state["independent_solve_count"] == 1
+    assert state["hint_count_total"] == 1
 
 
 def test_projection_failure_rolls_back_attempt_and_event(learner_db, monkeypatch) -> None:
