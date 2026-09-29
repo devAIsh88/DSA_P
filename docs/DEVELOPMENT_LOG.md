@@ -143,6 +143,22 @@ This is a milestone-based engineering history. Append new entries in chronologic
 
 - Define the versioned hint observation policy and reporting threshold, then process assisted evidence; establish mistake/retention labels from validated sources. Resolve multi-skill attribution separately before any multi-skill mastery update.
 
+## 2026-09-29 — Phase 4B v1 policy acceptance
+
+### Issues Encountered
+
+- A research proposal recommended fractional hint-weight observations and normalized multi-skill weights. Review found that standard BKT has binary observations: merely allowing a float in the current provider would treat every fractional value as incorrect. The proposal did not establish a calibrated soft-observation model or historical mapping snapshots for replay.
+
+### Decisions
+
+- Retain standard binary BKT for eligible independent, single-skill, unit-weight Attempts. Assisted, multiply mapped, and non-unit-weight Attempts do not update mastery in v1.
+- Report assistance separately from mastery. Preserve hint requests and delivered levels as historical events; count request totals separately from delivered-level averages. Classify successful Attempts with any recorded hint request or delivery as hint-associated for descriptive v1 reporting, without a pedagogical threshold.
+- Keep fractional hint-weight BKT and normalized `ProblemSkill.weight` mastery credit as research proposals. Future policies can be evaluated against preserved immutable events; projection metadata stays on derived state.
+
+### Next
+
+- Implement and verify replayable assistance reporting, including assisted-only histories, without a migration or new public hint API.
+
 ## Document Roles
 
 - `docs/PROJECT_STATUS.md` records current truth.
