@@ -15,12 +15,12 @@
 
 ## Current
 
-Phase 4B v1 now replays terminal single-skill Attempt reporting separately from mastery observations. `SkillState` persists versioned binary BKT from eligible independent evidence; assisted and abandoned Attempts contribute descriptive counts, delivered hint levels, and timing without changing mastery. Only one `ProblemSkill` mapping with unit weight qualifies. Fractional hint-weight BKT and normalized multi-skill mastery credit remain research only. No schema change was needed: migration `20260929_0005` remains local head, Alembic found no drift, and the complete suite passed (45 passed, 1 opt-in Judge0 test skipped). Attempt-linked and learner-state APIs reject ambiguous databases with multiple User rows. Authentication for a multi-user or public deployment remains outside this phase.
+Phase 4B v1 is the latest implemented checkpoint. `SkillState` replays eligible independent, single-skill evidence through versioned binary BKT; assisted and abandoned activity contributes descriptive reporting without changing mastery. Fractional hint BKT and multi-skill mastery credit remain research. The last implementation verification recorded 45 passed, 1 opt-in Judge0 test skipped, and Alembic `20260929_0005 (head)` with no drift. The Phase 6 AI Tutor architecture is now frozen in `docs/architecture/PHASE6_AI_TUTOR_CONTRACT.md`; no tutor functionality is implemented yet.
 
 ## Next
 
-- Evaluate the v1 learner-state estimates and reporting semantics against recorded evidence before accepting any new observation or attribution policy. Add mistake and retention signals only when source rules are established. Multi-skill mastery attribution remains deferred; do not infer weights.
+- When implementation is separately started, follow the frozen Phase 6 contract for bounded provider access, deterministic hint gating, tutor events, and the minimal post-attempt understanding check. Provider output must not change mastery. Evaluate Phase 4B estimates before accepting new mastery or multi-skill attribution policies.
 
 ## Later
 
-AI Tutor, Adaptive Engine, UI, research validation/experiments, and external practice integration.
+Adaptive Engine, UI, research validation/experiments, and external practice integration.

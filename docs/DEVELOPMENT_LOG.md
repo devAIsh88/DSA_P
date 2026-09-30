@@ -188,6 +188,31 @@ This is a milestone-based engineering history. Append new entries in chronologic
 
 - Evaluate reporting and mastery estimates using preserved evidence before accepting further observation policies. Multi-skill attribution, mistake and retention rules, tutor, adaptive engine, and UI remain outside this checkpoint.
 
+## 2026-09-30 — Phase 6 AI Tutor architecture freeze
+
+### Completed
+
+- Readiness scan compared the PRDs, existing evidence/evaluation services, and tutor research. The tracked Phase 6 contract now specifies six public routes, event causality, retry behavior, safe provider context, and failure responses. No tutor implementation or schema change was made.
+
+### Issues Encountered
+
+- Research left the API contract incomplete, used `/attempts/{id}/hints` instead of the implementation PRD's `/hints/request`, and deferred an understanding check expressly listed as an AI Tutor responsibility. It also proposed atomic hint events, synthetic degraded diagnosis, legacy SDK/model choices, and direct recent-error state updates.
+
+### Decisions
+
+- Retained `POST /hints/request`, added the minimal deterministic-question/learner-answer/AI-evaluation understanding flow, and retained PRD Level 6 full explanation/solution only behind a versioned deterministic gate. Separate unrestricted solution generation remains deferred.
+- `HINT_REQUESTED` commits independently; `HINT_DELIVERED` records only content actually delivered. Learner answers likewise persist before optional AI evaluation. Diagnosis, reasoning analysis, post-attempt explanation, and understanding evaluation fail with `503` rather than fabricated successful output.
+- Delivered/received content is evidence; AI interpretations and confidence are derived labels; provider/model/prompt/policy identity is provenance. Any `recent_error_types` update must replay committed diagnosis events; mastery is untouched.
+- Kept `TutorProvider` replaceable, chose `GeminiTutorProvider` with `google-genai` initially, and made `gemini-3.8-flash` a configurable default. Corrected the legacy SDK and retired Gemini 2.0 Flash proposals. Deferred MCP, RAG, fine-tuning, and later adaptive/UI work.
+
+### Verification
+
+- Documentation-only endpoint audit covered method, path, request, response, Attempt state, idempotency, events, and provider failure for every route. No application tests or migrations were run for this architecture checkpoint; the prior verified schema head remains `20260929_0005`.
+
+### Next
+
+- Begin Phase 6 implementation only under the tracked architecture contract and a separate implementation task; keep normal tests provider-independent.
+
 ## Document Roles
 
 - `docs/PROJECT_STATUS.md` records current truth.

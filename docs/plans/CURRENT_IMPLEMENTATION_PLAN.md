@@ -1,6 +1,6 @@
 # Current Implementation Plan
 
-This is the active engineering plan for Phase 4B. Product PRD v0.3 (`DEV Placement OS.docx`) governs long-term direction; the Python MVP Implementation PRD v0.1 governs MVP scope and order. The 4A/4B labels below split its Phase 4 (learning events) and Phase 5 (learner model) without changing that sequence. See `docs/architecture/LEARNER_EVIDENCE_AND_STATE.md` for the stable data boundary.
+This is the active engineering plan for the next planned implementation increment, AI Tutor Phase 6. Product PRD v0.3 (`DEV Placement OS.docx`) governs long-term direction; Python MVP Implementation PRD v0.1 governs MVP scope and order. Phase 4A/4B split its learning-event and learner-model work without changing the sequence. `docs/architecture/PHASE6_AI_TUTOR_CONTRACT.md` is the frozen Phase 6 contract; `docs/architecture/LEARNER_EVIDENCE_AND_STATE.md` remains the evidence/state boundary. Architecture acceptance does not itself begin implementation.
 
 ## Current State
 
@@ -12,7 +12,7 @@ This is the active engineering plan for Phase 4B. Product PRD v0.3 (`DEV Placeme
 
 ## Next Objective
 
-Phase 4A supplies independently verified persistent evidence. Phase 4B has a working single-skill slice: eligible unassisted Attempt completions replay into persisted SkillState. The accepted v1 decision keeps binary BKT for independent single-skill evidence and adds replayable assistance reporting without changing mastery. Preserve the full product flow: Problem → Attempt → Reasoning / learner actions → Submission → Execution → Deterministic Evaluation → Learning Event / Session Vault → Learner-State Update → Adaptive Decision → Next Activity. This plan does not authorize later tutor or adaptive features.
+Phase 4A supplies persistent evidence; Phase 4B v1 supplies binary single-skill BKT and separate assisted-activity reporting. The next implementation increment is the bounded Phase 6 tutor contract: provider abstraction, safe context, diagnosis, reasoning analysis, six-level hints, post-attempt explanation, and a minimal understanding check. Preserve the full product flow: Problem → Attempt → Reasoning / learner actions → Submission → Execution → Deterministic Evaluation → Learning Event / Session Vault → Learner-State Update → Adaptive Decision → Next Activity. Do not begin Phase 7 adaptive work as part of tutor implementation.
 
 ## Phase 4A — Learning Evidence / Session Vault
 
@@ -39,6 +39,13 @@ After v1 reporting, define mistake and retention signals from validated evidence
 - A problem may supply evidence for multiple skills. `ProblemSkill` stores the relation, but multi-skill attribution and evidence weighting remain unimplemented. Do not duplicate raw LearningEvents merely to cause multiple mastery updates. Define attribution before implementing multi-skill updates.
 - Keep focused tests for implemented BKT updates, provenance, replay, eligibility, transaction failure, and hidden-evidence protection. Add hint and multi-skill policy tests only when those policies are implemented.
 
+## Phase 6 — AI Tutor (architecture frozen; implementation not started)
+
+- Implement typed, replaceable `TutorProvider` with one `GeminiTutorProvider` using `google-genai`; keep `gemini-3.8-flash` a configurable initial model default. Use `MockTutorProvider` for normal tests and a hint-only deterministic fallback. The application controls hint level and Level 6 gating.
+- Implement only the six public routes and exact schemas, statuses, idempotency, events, and failure behavior in `docs/architecture/PHASE6_AI_TUTOR_CONTRACT.md`. Retain the implementation PRD's `POST /hints/request` path. A hint request may persist without a delivery; an understanding answer may persist without AI evaluation.
+- Store delivered/received interaction content as event evidence, AI classification/confidence as derived labels, and provider/model/prompt/policy identity as provenance. Do not amend committed history or treat provider output as correctness. If recent-error projection is feasible, replay committed diagnosis events deterministically; otherwise defer it. Never change mastery through tutor flows.
+- Assemble bounded learner-owned context without hidden tests, expected outputs, protected diagnostics, secrets, or full chat history. Test provider failures, partial-event recovery, learner-safe allowlists, gate behavior, idempotency, and all Phase 1–4B regressions. No migration is accepted; Alembic head stays `20260929_0005`.
+
 ## Deferred Work
 
-Defer AI tutor and LLM provider implementation, adaptive recommendation, LeetCode ingestion, retention scheduler, neural knowledge tracing, embeddings/RAG expansion, dashboard/UI, fine-tuning, local-model deployment, Kafka, Redis, and Kubernetes. These remain later product/MVP work where the PRDs require them; their visibility in an interface does not move them into Phase 4A or 4B.
+Defer Phase 7 adaptive recommendation, LeetCode ingestion, retention scheduler, neural knowledge tracing, embeddings/RAG expansion, dashboard/UI, fine-tuning, local-model infrastructure, MCP, Kafka, Redis, and Kubernetes. A separate unrestricted final-solution generator and advanced multi-turn agent are also deferred. Their visibility in research or a PRD does not move them into Phase 6.
