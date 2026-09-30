@@ -38,6 +38,18 @@ _LEARNER_EVIDENCE_KEYS: dict[LearningEventType, frozenset[str]] = {
         "hint_count", "max_hint_level",
     }),
     LearningEventType.UNDERSTANDING_CHECK: frozenset({"schema_version", "learner_rating", "prompt_version"}),
+    LearningEventType.TUTOR_DIAGNOSIS_GENERATED: frozenset({
+        "schema_version", "submission_id", "deterministic_status", "diagnosis_summary",
+    }),
+    LearningEventType.TUTOR_REASONING_ANALYSIS_GENERATED: frozenset({
+        "schema_version", "reasoning_event_id", "feedback_text",
+    }),
+    LearningEventType.POST_ATTEMPT_EXPLANATION_GENERATED: frozenset({
+        "schema_version", "explanation_text", "key_insight",
+    }),
+    LearningEventType.TUTOR_UNDERSTANDING_EVALUATED: frozenset({
+        "schema_version", "check_event_id", "answer_event_id", "feedback_text",
+    }),
 }
 
 

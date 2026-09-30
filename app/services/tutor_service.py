@@ -3,14 +3,22 @@
 from __future__ import annotations
 
 from hashlib import sha256
+from collections.abc import Awaitable, Callable
+from typing import TypeVar
+
+from pydantic import BaseModel
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.models.learning_event import LearningEvent
+from app.models.submission import Submission
 from app.schemas.learning_event import EvidenceSource, LearningEventType
-from app.schemas.tutor import HintRequest, HintResponse, HintTask
+from app.schemas.tutor import (
+    DiagnoseRequest, DiagnoseResponse, DiagnosisResult, HintRequest, HintResponse, HintResult, HintTask,
+    ReasoningAnalysisRequest, ReasoningAnalysisResponse, ReasoningResult, ReasoningTask, TutorRequest,
+)
 from app.services.attempt_service import ensure_attempt_owner, get_attempt
 from app.services.learning_event_service import append_event, event_by_key, lock_attempt
 from app.services.tutor_context import build_tutor_context
@@ -20,6 +28,33 @@ from app.services.tutor_provider import FallbackHintProvider, TutorProvider, Tut
 
 class TutorConflictError(Exception):
     """State, ownership, evidence, or retry payload conflicts with a tutor action."""
+
+
+class TutorNotFoundError(Exception):
+    """A referenced Submission or event is absent."""
+
+
+_Result = TypeVar("_Result", bound=BaseModel)
+
+
+async def _invoke(call: Callable[[], Awaitable[object]], retries: int, schema: type[_Result]) -> _Result:
+    """Retry only failed model output, with a configured finite bound."""
+
+    for attempt in range(retries + 1):
+        try:
+            return schema.model_validate(await call())
+        except (TutorProviderError, ValueError, TypeError) as error:
+            if attempt == retries:
+                raise TutorProviderError("Tutor provider unavailable") from error
+    raise AssertionError("Retry loop must return or raise")
+
+
+def _prior_action(db: Session, attempt_id: int, action: str, key: str,
+                  expected: LearningEventType, target_field: str, target_id: int) -> LearningEvent | None:
+    prior = event_by_key(db, attempt_id, _key(action, key))
+    if prior is not None and (prior.event_type != expected.value or prior.evidence.get(target_field) != target_id):
+        raise TutorConflictError("Idempotency key was used for different tutor evidence")
+    return prior
 
 
 def _key(action: str, client_key: str, part: str = "") -> str:
@@ -93,8 +128,8 @@ async def request_hint(
     context = build_tutor_context(db, attempt)
     task = HintTask(context=context, level=payload.requested_level)
     try:
-        result = await provider.generate_hint(task)
-    except (TutorProviderError, ValueError):
+        result = HintResult.model_validate(await provider.generate_hint(task))
+    except (TutorProviderError, ValueError, TypeError):
         result = None
     if result is None:
         result = await fallback.generate_hint(task)
@@ -118,3 +153,123 @@ async def request_hint(
     )
     db.commit()
     return _hint_response(attempt.id, request_event, delivery)
+
+
+def _diagnosis_response(event: LearningEvent) -> DiagnoseResponse:
+    labels = event.derived_labels or {}
+    return DiagnoseResponse(
+        diagnosis_event_id=event.id, submission_id=event.evidence["submission_id"],
+        deterministic_status=event.evidence["deterministic_status"],
+        misconception_category=labels.get("misconception_category"),
+        misconception_label=labels.get("misconception_label"),
+        diagnosis_summary=event.evidence["diagnosis_summary"],
+    )
+
+
+async def diagnose_attempt(
+    db: Session, attempt_id: int, payload: DiagnoseRequest,
+    provider: TutorProvider, settings: Settings,
+) -> DiagnoseResponse:
+    """Diagnose a persisted, deterministically evaluated Submission."""
+
+    attempt = _locked_owned_attempt(db, attempt_id)
+    submission = db.get(Submission, payload.submission_id)
+    if submission is None:
+        raise TutorNotFoundError
+    if submission.attempt_id != attempt.id or submission.problem_id != attempt.problem_id:
+        raise TutorConflictError("Submission does not belong to Attempt")
+    evaluation = db.scalar(select(LearningEvent).where(
+        LearningEvent.attempt_id == attempt.id,
+        LearningEvent.submission_id == submission.id,
+        LearningEvent.event_type == LearningEventType.SUBMISSION_EVALUATED.value,
+    ))
+    if evaluation is None:
+        raise TutorConflictError("Submission lacks deterministic evaluation evidence")
+    prior = _prior_action(db, attempt.id, "diagnosis", payload.idempotency_key,
+                          LearningEventType.TUTOR_DIAGNOSIS_GENERATED, "submission_id", submission.id)
+    if prior is not None:
+        return _diagnosis_response(prior)
+    if attempt.status not in ("ACTIVE", "COMPLETED"):
+        raise TutorConflictError("Diagnosis requires an ACTIVE or COMPLETED Attempt")
+    context = build_tutor_context(db, attempt, submission=submission)
+    result: DiagnosisResult = await _invoke(
+        lambda: provider.diagnose_attempt(TutorRequest(context=context)), settings.tutor_max_retries,
+        DiagnosisResult,
+    )
+    attempt = _locked_owned_attempt(db, attempt_id)
+    prior = _prior_action(db, attempt.id, "diagnosis", payload.idempotency_key,
+                          LearningEventType.TUTOR_DIAGNOSIS_GENERATED, "submission_id", submission.id)
+    if prior is not None:
+        db.rollback()
+        return _diagnosis_response(prior)
+    if attempt.status not in ("ACTIVE", "COMPLETED"):
+        raise TutorConflictError("Attempt closed during diagnosis")
+    labels = {"misconception_category": result.misconception_category.value
+              if result.misconception_category else None,
+              "misconception_label": result.misconception_label}
+    if result.confidence is not None:
+        labels["model_confidence"] = result.confidence
+    event = append_event(
+        db, attempt.id, LearningEventType.TUTOR_DIAGNOSIS_GENERATED,
+        {"schema_version": 1, "submission_id": submission.id,
+         "deterministic_status": evaluation.evidence["overall_status"],
+         "diagnosis_summary": result.diagnosis_summary},
+        {**result.provenance.model_dump(exclude_none=True), "source_event_ids": [evaluation.id]},
+        submission_id=submission.id, derived_labels=labels,
+        idempotency_key=_key("diagnosis", payload.idempotency_key),
+    )
+    db.commit()
+    return _diagnosis_response(event)
+
+
+def _reasoning_response(event: LearningEvent) -> ReasoningAnalysisResponse:
+    return ReasoningAnalysisResponse(
+        analysis_event_id=event.id, reasoning_event_id=event.evidence["reasoning_event_id"],
+        reasoning_quality=event.derived_labels["reasoning_quality"],
+        feedback_text=event.evidence["feedback_text"],
+    )
+
+
+async def analyze_reasoning(
+    db: Session, attempt_id: int, payload: ReasoningAnalysisRequest,
+    provider: TutorProvider, settings: Settings,
+) -> ReasoningAnalysisResponse:
+    """Analyze a specific immutable reasoning event without replacing it."""
+
+    attempt = _locked_owned_attempt(db, attempt_id)
+    source = db.get(LearningEvent, payload.reasoning_event_id)
+    if source is None:
+        raise TutorNotFoundError
+    if source.attempt_id != attempt.id or source.event_type != LearningEventType.REASONING_RECORDED.value:
+        raise TutorConflictError("Referenced event is not Attempt reasoning")
+    prior = _prior_action(db, attempt.id, "reasoning", payload.idempotency_key,
+                          LearningEventType.TUTOR_REASONING_ANALYSIS_GENERATED, "reasoning_event_id", source.id)
+    if prior is not None:
+        return _reasoning_response(prior)
+    if attempt.status != "ACTIVE":
+        raise TutorConflictError("Reasoning analysis requires an ACTIVE Attempt")
+    context = build_tutor_context(db, attempt, reasoning_event=source)
+    result: ReasoningResult = await _invoke(
+        lambda: provider.analyze_reasoning(ReasoningTask(
+            context=context, reasoning_text=source.evidence["reasoning_text"][:10000],
+        )), settings.tutor_max_retries, ReasoningResult,
+    )
+    attempt = _locked_owned_attempt(db, attempt_id)
+    prior = _prior_action(db, attempt.id, "reasoning", payload.idempotency_key,
+                          LearningEventType.TUTOR_REASONING_ANALYSIS_GENERATED, "reasoning_event_id", source.id)
+    if prior is not None:
+        db.rollback()
+        return _reasoning_response(prior)
+    if attempt.status != "ACTIVE":
+        raise TutorConflictError("Attempt closed during reasoning analysis")
+    labels = {"reasoning_quality": result.reasoning_quality.value}
+    if result.confidence is not None:
+        labels["model_confidence"] = result.confidence
+    event = append_event(
+        db, attempt.id, LearningEventType.TUTOR_REASONING_ANALYSIS_GENERATED,
+        {"schema_version": 1, "reasoning_event_id": source.id, "feedback_text": result.feedback_text},
+        {**result.provenance.model_dump(exclude_none=True), "source_event_ids": [source.id]},
+        derived_labels=labels, idempotency_key=_key("reasoning", payload.idempotency_key),
+    )
+    db.commit()
+    return _reasoning_response(event)
