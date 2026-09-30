@@ -17,6 +17,12 @@ class Settings(BaseSettings):
     )
     sql_echo: bool = Field(default=False, validation_alias="SQL_ECHO")
     judge0_base_url: str = Field(default="", validation_alias="JUDGE0_BASE_URL")
+    tutor_provider: str = Field(default="gemini", validation_alias="TUTOR_PROVIDER")
+    tutor_model: str = Field(default="gemini-3.8-flash", validation_alias="TUTOR_MODEL")
+    google_api_key: str = Field(default="", validation_alias="GOOGLE_API_KEY", repr=False)
+    tutor_timeout_seconds: float = Field(default=20.0, gt=0, le=120, validation_alias="TUTOR_TIMEOUT_SECONDS")
+    tutor_max_retries: int = Field(default=2, ge=0, le=3, validation_alias="TUTOR_MAX_RETRIES")
+    hint_level_6_requires_level_5: bool = Field(default=True, validation_alias="HINT_LEVEL_6_REQUIRES_LEVEL_5")
 
 
 @lru_cache
