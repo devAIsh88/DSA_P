@@ -30,7 +30,9 @@ _LEARNER_EVIDENCE_KEYS: dict[LearningEventType, frozenset[str]] = {
     LearningEventType.HINT_REQUESTED: frozenset({
         "schema_version", "hint_level_requested", "elapsed_ms_since_attempt_start", "submission_count_at_request",
     }),
-    LearningEventType.HINT_DELIVERED: frozenset({"schema_version", "hint_level_delivered", "hint_content_id"}),
+    LearningEventType.HINT_DELIVERED: frozenset({
+        "schema_version", "hint_level_delivered", "hint_content_id", "request_event_id", "hint_text",
+    }),
     LearningEventType.ATTEMPT_COMPLETED: frozenset({
         "schema_version", "status", "outcome", "final_submission_id", "total_duration_ms",
         "hint_count", "max_hint_level",
@@ -76,6 +78,7 @@ def append_event(
     submission_id: int | None = None,
     skill_id: int | None = None,
     idempotency_key: str | None = None,
+    derived_labels: dict[str, Any] | None = None,
 ) -> LearningEvent:
     """Allocate the next sequence under a row lock and append within the caller's transaction."""
 
@@ -108,7 +111,7 @@ def append_event(
         occurred_at=datetime.now(UTC),
         attempt_sequence=next_sequence,
         evidence=evidence,
-        derived_labels=None,
+        derived_labels=derived_labels,
         provenance=provenance,
         idempotency_key=idempotency_key,
     )

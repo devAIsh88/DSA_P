@@ -292,7 +292,7 @@ def test_db_uniqueness_and_append_only_service_surface(phase4a_db) -> None:
     assert client.get(f"/attempts/{attempt_id}/events").json()[1]["evidence"]["reasoning_text"] == "retained"
     paths = {(route.path, method) for route in app.routes for method in getattr(route, "methods", ())}
     assert not any(method in {"PUT", "PATCH", "DELETE"} and path.startswith("/attempts") for path, method in paths)
-    assert not any("hint" in path or "understanding-check" in path for path, _method in paths)
+    # Later phases may add read/append routes, but historical events remain immutable.
 
 
 def test_database_rejects_duplicate_submission_event_and_retry_key(phase4a_db) -> None:
