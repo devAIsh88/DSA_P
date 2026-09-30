@@ -37,7 +37,10 @@ _LEARNER_EVIDENCE_KEYS: dict[LearningEventType, frozenset[str]] = {
         "schema_version", "status", "outcome", "final_submission_id", "total_duration_ms",
         "hint_count", "max_hint_level",
     }),
-    LearningEventType.UNDERSTANDING_CHECK: frozenset({"schema_version", "learner_rating", "prompt_version"}),
+    LearningEventType.UNDERSTANDING_CHECK: frozenset({
+        "schema_version", "learner_rating", "prompt_version", "stage", "question", "question_version",
+        "check_event_id", "answer_text",
+    }),
     LearningEventType.TUTOR_DIAGNOSIS_GENERATED: frozenset({
         "schema_version", "submission_id", "deterministic_status", "diagnosis_summary",
     }),

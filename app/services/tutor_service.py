@@ -17,12 +17,15 @@ from app.models.submission import Submission
 from app.schemas.learning_event import EvidenceSource, LearningEventType
 from app.schemas.tutor import (
     DiagnoseRequest, DiagnoseResponse, DiagnosisResult, HintRequest, HintResponse, HintResult, HintTask,
+    ExplanationResult, PostExplanationRequest, PostExplanationResponse,
     ReasoningAnalysisRequest, ReasoningAnalysisResponse, ReasoningResult, ReasoningTask, TutorRequest,
+    UnderstandingAnswerRequest, UnderstandingAnswerResponse, UnderstandingCheckRequest,
+    UnderstandingCheckResponse, UnderstandingResult, UnderstandingTask,
 )
 from app.services.attempt_service import ensure_attempt_owner, get_attempt
 from app.services.learning_event_service import append_event, event_by_key, lock_attempt
 from app.services.tutor_context import build_tutor_context
-from app.services.tutor_prompts import HINT_GATE_VERSION
+from app.services.tutor_prompts import HINT_GATE_VERSION, UNDERSTANDING_QUESTION_VERSION
 from app.services.tutor_provider import FallbackHintProvider, TutorProvider, TutorProviderError
 
 
@@ -273,3 +276,174 @@ async def analyze_reasoning(
     )
     db.commit()
     return _reasoning_response(event)
+
+
+def _explanation_response(event: LearningEvent) -> PostExplanationResponse:
+    return PostExplanationResponse(
+        explanation_event_id=event.id, explanation_text=event.evidence["explanation_text"],
+        key_insight=event.evidence["key_insight"],
+    )
+
+
+async def post_attempt_explanation(
+    db: Session, attempt_id: int, payload: PostExplanationRequest,
+    provider: TutorProvider, settings: Settings,
+) -> PostExplanationResponse:
+    """Deliver an explanation only after a completed Attempt."""
+
+    attempt = _locked_owned_attempt(db, attempt_id)
+    prior = event_by_key(db, attempt.id, _key("explanation", payload.idempotency_key))
+    if prior is not None:
+        if prior.event_type != LearningEventType.POST_ATTEMPT_EXPLANATION_GENERATED.value:
+            raise TutorConflictError("Idempotency key was used for another action")
+        return _explanation_response(prior)
+    if attempt.status != "COMPLETED":
+        raise TutorConflictError("Post-attempt explanation requires a COMPLETED Attempt")
+    context = build_tutor_context(db, attempt)
+    result: ExplanationResult = await _invoke(
+        lambda: provider.generate_post_attempt_explanation(TutorRequest(context=context)),
+        settings.tutor_max_retries, ExplanationResult,
+    )
+    attempt = _locked_owned_attempt(db, attempt_id)
+    prior = event_by_key(db, attempt.id, _key("explanation", payload.idempotency_key))
+    if prior is not None:
+        db.rollback()
+        return _explanation_response(prior)
+    if attempt.status != "COMPLETED":
+        raise TutorConflictError("Attempt status changed during explanation")
+    event = append_event(
+        db, attempt.id, LearningEventType.POST_ATTEMPT_EXPLANATION_GENERATED,
+        {"schema_version": 1, "explanation_text": result.explanation_text,
+         "key_insight": result.key_insight},
+        result.provenance.model_dump(exclude_none=True),
+        idempotency_key=_key("explanation", payload.idempotency_key),
+    )
+    db.commit()
+    return _explanation_response(event)
+
+
+def _question(outcome: str | None) -> str:
+    if outcome == "GAVE_UP":
+        return ("Explain what would need to change in your attempted approach, "
+                "its time and space complexity, and one important edge case.")
+    return ("Explain why your final approach works, its time and space complexity, "
+            "and one important edge case.")
+
+
+def _check_response(event: LearningEvent) -> UnderstandingCheckResponse:
+    return UnderstandingCheckResponse(
+        check_event_id=event.id, question=event.evidence["question"],
+        question_version=event.evidence["question_version"],
+    )
+
+
+def request_understanding_check(
+    db: Session, attempt_id: int, payload: UnderstandingCheckRequest,
+) -> UnderstandingCheckResponse:
+    """Append a deterministic, versioned post-attempt question."""
+
+    attempt = _locked_owned_attempt(db, attempt_id)
+    prior = event_by_key(db, attempt.id, _key("understanding-prompt", payload.idempotency_key))
+    if prior is not None:
+        if (prior.event_type != LearningEventType.UNDERSTANDING_CHECK.value
+                or prior.evidence.get("stage") != "PROMPTED"):
+            raise TutorConflictError("Idempotency key was used for another action")
+        return _check_response(prior)
+    if attempt.status != "COMPLETED":
+        raise TutorConflictError("Understanding checks require a COMPLETED Attempt")
+    event = append_event(
+        db, attempt.id, LearningEventType.UNDERSTANDING_CHECK,
+        {"schema_version": 1, "stage": "PROMPTED", "question": _question(attempt.outcome),
+         "question_version": UNDERSTANDING_QUESTION_VERSION},
+        {"source": EvidenceSource.DETERMINISTIC_RULE.value,
+         "rule_version": UNDERSTANDING_QUESTION_VERSION},
+        idempotency_key=_key("understanding-prompt", payload.idempotency_key),
+    )
+    db.commit()
+    return _check_response(event)
+
+
+def _answer_response(answer: LearningEvent, evaluation: LearningEvent) -> UnderstandingAnswerResponse:
+    return UnderstandingAnswerResponse(
+        answer_event_id=answer.id, evaluation_event_id=evaluation.id,
+        answer_quality=evaluation.derived_labels["answer_quality"],
+        feedback_text=evaluation.evidence["feedback_text"],
+    )
+
+
+def _evaluation_for_answer(db: Session, attempt_id: int, answer_id: int) -> LearningEvent | None:
+    return db.scalar(select(LearningEvent).where(
+        LearningEvent.attempt_id == attempt_id,
+        LearningEvent.event_type == LearningEventType.TUTOR_UNDERSTANDING_EVALUATED.value,
+        LearningEvent.evidence["answer_event_id"].as_integer() == answer_id,
+    ).limit(1))
+
+
+async def answer_understanding_check(
+    db: Session, attempt_id: int, check_event_id: int, payload: UnderstandingAnswerRequest,
+    provider: TutorProvider, settings: Settings,
+) -> UnderstandingAnswerResponse:
+    """Commit the learner answer before optional provider evaluation."""
+
+    attempt = _locked_owned_attempt(db, attempt_id)
+    check = db.get(LearningEvent, check_event_id)
+    if check is None:
+        raise TutorNotFoundError
+    if (check.attempt_id != attempt.id or check.event_type != LearningEventType.UNDERSTANDING_CHECK.value
+            or check.evidence.get("stage") != "PROMPTED"):
+        raise TutorConflictError("Referenced event is not a prompted check in this Attempt")
+    answer = event_by_key(db, attempt.id, _key("understanding-answer", payload.idempotency_key))
+    if answer is not None:
+        if (answer.event_type != LearningEventType.UNDERSTANDING_CHECK.value
+                or answer.evidence.get("stage") != "ANSWERED"
+                or answer.evidence.get("check_event_id") != check.id
+                or answer.evidence.get("answer_text") != payload.answer_text):
+            raise TutorConflictError("Idempotency key was used for another answer")
+        prior_evaluation = _evaluation_for_answer(db, attempt.id, answer.id)
+        if prior_evaluation is not None:
+            return _answer_response(answer, prior_evaluation)
+    else:
+        if attempt.status != "COMPLETED":
+            raise TutorConflictError("Answer requires a COMPLETED Attempt")
+        existing_answer = db.scalar(select(LearningEvent).where(
+            LearningEvent.attempt_id == attempt.id,
+            LearningEvent.event_type == LearningEventType.UNDERSTANDING_CHECK.value,
+            LearningEvent.evidence["stage"].as_string() == "ANSWERED",
+            LearningEvent.evidence["check_event_id"].as_integer() == check.id,
+        ).limit(1))
+        if existing_answer is not None:
+            raise TutorConflictError("This check already has an answer")
+        answer = append_event(
+            db, attempt.id, LearningEventType.UNDERSTANDING_CHECK,
+            {"schema_version": 1, "stage": "ANSWERED", "check_event_id": check.id,
+             "answer_text": payload.answer_text},
+            {"source": EvidenceSource.LEARNER.value, "question_version": UNDERSTANDING_QUESTION_VERSION},
+            idempotency_key=_key("understanding-answer", payload.idempotency_key),
+        )
+        db.commit()
+    context = build_tutor_context(db, attempt)
+    result: UnderstandingResult = await _invoke(
+        lambda: provider.evaluate_understanding(UnderstandingTask(
+            context=context, question=check.evidence["question"], answer_text=payload.answer_text,
+        )), settings.tutor_max_retries, UnderstandingResult,
+    )
+    attempt = _locked_owned_attempt(db, attempt_id)
+    prior_evaluation = _evaluation_for_answer(db, attempt.id, answer.id)
+    if prior_evaluation is not None:
+        db.rollback()
+        return _answer_response(answer, prior_evaluation)
+    if attempt.status != "COMPLETED":
+        raise TutorConflictError("Attempt status changed during understanding evaluation")
+    labels = {"answer_quality": result.answer_quality.value}
+    if result.confidence is not None:
+        labels["model_confidence"] = result.confidence
+    evaluation = append_event(
+        db, attempt.id, LearningEventType.TUTOR_UNDERSTANDING_EVALUATED,
+        {"schema_version": 1, "check_event_id": check.id, "answer_event_id": answer.id,
+         "feedback_text": result.feedback_text},
+        {**result.provenance.model_dump(exclude_none=True), "source_event_ids": [check.id, answer.id]},
+        derived_labels=labels,
+        idempotency_key=_key("understanding-answer", payload.idempotency_key, "evaluation"),
+    )
+    db.commit()
+    return _answer_response(answer, evaluation)
