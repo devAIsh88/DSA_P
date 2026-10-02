@@ -284,6 +284,44 @@ This is a milestone-based engineering history. Append new entries in chronologic
 
 - Implement Phase 7 under the frozen contract; keep Phase 8 deferred. Architecture checkpoint is recorded in Git.
 
+## 2026-10-03 — Phase 7 Adaptive Engine completion
+
+### Completed
+
+- Implemented the frozen `PHASE7_ADAPTIVE_ENGINE_CONTRACT.md`: typed pure policy and `config/recommendation_policy.json`, recommendation persistence/lifecycle services, allowlisted `GET /recommendations/next`, and transactional consumption through the existing Attempt-start service.
+- Added deterministic cold start, difficulty adjustment, remediation, scheduled review, evidenced weak-skill targeting, catalogue coverage and conditional revisit. Every persisted decision selects a Problem and uses one of the five PRD actions with machine-readable reasons.
+- Stored exact replay inputs, policy/projection versions, catalogue/mapping snapshots and learner-scoped event references. Maximum event ID plus committed count detects late lower-ID commits; fingerprints and review deadlines also invalidate cached decisions.
+- Added isolated policy, persistence, service, API and Attempt fixtures/tests. Kept the existing execution abstraction, binary BKT and immutable event history unchanged.
+
+### Issues Encountered
+
+- Independent tests found a historical-attribution gap in revisit selection, expired ORM attributes allowing terminal recommendation reopening, and inconsistent UTC serialization on reuse. Each was fixed with regression coverage.
+- The self-audit found malformed historical JSON and broken evaluation references could escape the safe failure boundary. Structured evidence, authority, references and integer pass counts now fail closed; supported invalid history returns `503` without rewriting evidence or learner state.
+
+### Decisions
+
+- Retained five PRD actions and versioned, uncalibrated thresholds. Abandonment breaks performance streaks without becoming incorrectness; review is a scheduling heuristic, not evidence of forgetting. Promotion requires independent performance on distinct Problems and weak-skill targeting requires actual observations.
+- Shared User-row locking and a partial unique index protect one active recommendation. Fresh matching starts consume atomically; stale/different choices supersede; failed starts roll back and idempotent retrieval of an old Attempt cannot consume newer recommendations.
+- Normal ORM/service behavior protects recommendation decisions; direct SQL remains outside that protection. Evidence committed after the final consistency check may stale a decision until the next request detects it.
+- No catalogue seed was needed for correctness. The local database remains one Easy unmapped problem with no learner/activity rows; deterministic fixtures supply multiple skills/difficulties without manufacturing persistent learner activity. Multi-skill mastery, retention modelling, recent-error targeting and policy-quality evaluation remain deferred.
+
+### Verification
+
+- Baseline: 67 passed, 1 skipped. Final full suite: **263 passed, 1 opt-in Judge0 test skipped, 8 existing warnings**. New focused suites: policy 59, persistence 46, service 58, API 16 and Attempt integration 17.
+- A guarded offline run (261 passed before the final two abandonment regressions) recorded zero live service/DNS attempts; only Windows standard-library event-loop socketpairs were allowed. No Gemini or Judge0 request was made by the normal suite.
+- PostgreSQL migration `20261003_0006` follows `20260929_0005`. Upgrade, downgrade after confirming the new table empty, and re-upgrade passed; current/head is `20261003_0006` and `alembic check` reports no schema drift.
+- Disposable localhost PostgreSQL concurrency checks confirmed two concurrent GETs reuse one decision and two concurrent matching starts create one Attempt/consume once. The isolated schema was removed; persistent learner data was unchanged. Read-only reviewer verdict: **APPROVED**.
+
+### Git
+
+- `b93a752` — architecture freeze; `77e8a57` — pure policy; `4144d1b` — persistence/migration.
+- `3a3c236` — lifecycle orchestration; `57b50f1` — API; `f3623c5` — Attempt integration; `f8f7cec` — historical-evidence hardening.
+- Each verified milestone was pushed to `origin/main`. This closeout is recorded by `docs: close Phase 7 adaptive engine implementation`; Git records its exact revision.
+
+### Next
+
+- Phase 8 readiness/architecture review only; UI implementation needs separate authorization. Retry externally blocked live Gemini verification independently. Recommendation-quality evaluation remains Phase 9 work; do not claim calibrated thresholds or optimal recommendations.
+
 ## Document Roles
 
 - `docs/PROJECT_STATUS.md` records current truth.

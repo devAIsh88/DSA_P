@@ -1,6 +1,6 @@
 # Current Implementation Plan
 
-This plan records completed implementation and the next development boundaries. Phase 6 is complete for development; live provider verification is externally blocked. Product PRD v0.3 (`DEV Placement OS.docx`) governs long-term direction; Python MVP Implementation PRD v0.1 governs MVP scope and order. Phase 4A/4B split its learning-event and learner-model work without changing the sequence. `docs/architecture/PHASE6_AI_TUTOR_CONTRACT.md` is the frozen Phase 6 contract; `docs/architecture/LEARNER_EVIDENCE_AND_STATE.md` remains the evidence/state boundary. Architecture acceptance does not itself begin implementation.
+This plan records completed implementation and the next development boundaries. Phase 7 is complete; Phase 6 live provider verification remains externally blocked. Product PRD v0.3 (`DEV Placement OS.docx`) governs long-term direction; Python MVP Implementation PRD v0.1 governs MVP scope and order. Phase 4A/4B split its learning-event and learner-model work without changing the sequence. The frozen Phase 6 and Phase 7 contracts are in `docs/architecture/`; `LEARNER_EVIDENCE_AND_STATE.md` remains the evidence/state boundary. Architecture acceptance does not itself begin implementation.
 
 ## Current State
 
@@ -9,12 +9,14 @@ This plan records completed implementation and the next development boundaries. 
 - Phase 3 execution/evaluation is complete: existing Submission and TestResult persistence, replaceable `ExecutionProvider` with Judge0 adapter, deterministic evaluation, and hidden-test redaction. The Phase 3 migration is applied and its tests passed, per the verified project state. Execution architecture and implementation contract are in `docs/research/phase3/`.
 - Phase 4A Learning Evidence / Session Vault is complete: Attempt lifecycle, append-only LearningEvents, Attempt-linked Submission evidence, ordering, idempotency, and learner-safe event responses. Migration `20260929_0004` is applied.
 - Learner-model architecture research and implementation contract are in `docs/research/learner-model/`. User-accepted Phase 4A decisions govern reasoning in event evidence, immutable committed events, and the MVP PRD Attempt route names where that contract differs.
+- Phase 4B v1 binary single-skill BKT/reporting and Phase 6 tutor flows are complete as described below.
+- Phase 7 is complete: deterministic recommendation policy, persistence, revision scheduling, weak-skill targeting, API and Attempt integration; migration `20261003_0006`. Full verification: 263 passed, 1 opt-in Judge0 test skipped; no schema drift.
 
 ## Next Objective
 
-Authorized increment: Phase 7 under `docs/architecture/PHASE7_ADAPTIVE_ENGINE_CONTRACT.md`. Implement pure versioned policy, recommendation persistence in revision 0006, lifecycle service, the single GET endpoint and atomic Attempt-start consumption. Preserve Phase 4B mastery and immutable historical evidence. All thresholds are uncalibrated MVP defaults; scheduled review is not forgetting.
+Next boundary: Phase 8 readiness/architecture review only. Do not implement UI before separate scope acceptance. Phase 7 is closed under `docs/architecture/PHASE7_ADAPTIVE_ENGINE_CONTRACT.md`; preserve its deterministic rules, Phase 4B mastery and immutable evidence. Recommendation-quality evaluation belongs to Phase 9.
 
-Phase 4A supplies persistent evidence, Phase 4B v1 supplies binary single-skill BKT and assisted-activity reporting, and completed Phase 6 supplies bounded tutor flows. Retry opt-in Gemini verification later; the external provider blocker does not block the authorized Phase 7 work. Tutor quality/safety validation remains necessary before production use. Preserve the full product flow: Problem → Attempt → Reasoning / learner actions → Submission → Execution → Deterministic Evaluation → Learning Event / Session Vault → Learner-State Update → Adaptive Decision → Next Activity.
+Phase 4A supplies persistent evidence, Phase 4B v1 supplies binary single-skill BKT and assisted-activity reporting, Phase 6 supplies bounded tutor flows, and Phase 7 supplies deterministic adaptive decisions. Retry opt-in Gemini verification later; the external provider blocker did not block Phase 7 completion. Tutor quality/safety validation remains necessary before production use. Preserve the full product flow: Problem → Attempt → Reasoning / learner actions → Submission → Execution → Deterministic Evaluation → Learning Event / Session Vault → Learner-State Update → Adaptive Decision → Next Activity.
 
 ## Phase 4A — Learning Evidence / Session Vault
 
@@ -46,8 +48,17 @@ After v1 reporting, define mistake and retention signals from validated evidence
 - Typed `TutorProvider`, deterministic mock, hint-only fallback, and `GeminiTutorProvider` using `google-genai` are implemented. `gemini-3.8-flash` is a configurable default. The application controls hint levels and the configurable Level 6 gate.
 - The six routes in the frozen contract are implemented, including PRD `POST /hints/request`, separate request/delivery events, and an understanding answer committed before optional AI evaluation. Provider failures preserve learner evidence and do not block core execution/evaluation.
 - Delivered/received content is evidence; AI classification/confidence is derived labels; provider/model/prompt identity is provenance. Committed events are not amended. Tutor flows do not update `SkillState` or mastery; `recent_error_types` projection remains deferred until a deterministic replay rule is accepted.
-- Bounded learner-owned context excludes hidden tests, expected outputs, protected diagnostics, secrets, and full chat history. Normal tests use mocks/fake SDK clients: 67 passed, 1 opt-in Judge0 test skipped. No migration was created; Alembic head stays `20260929_0005` with no schema drift.
+- Bounded learner-owned context excludes hidden tests, expected outputs, protected diagnostics, secrets, and full chat history. Phase 6 verification used mocks/fake SDK clients: 67 passed, 1 opt-in Judge0 test skipped. No Phase 6 migration was created; its verified Alembic head was `20260929_0005` with no schema drift.
 - Live smoke requests reached the authenticated Gemini HTTP service: `gemini-3.8-flash` returned `503 UNAVAILABLE`; `gemini-3.7-flash` returned `504 DEADLINE_EXCEEDED`. No implementation defect was established; failure handling preserved learner evidence and safe fallback behavior. Live structured-output validation and model quality remain externally blocked. Retry later without reopening Phase 6 or blocking Phase 7 development.
+
+## Phase 7 — Adaptive Engine (complete)
+
+- `RecommendationPolicy` consumes typed historical facts, supported projections and catalogue candidates without providers, persistence or side effects. The versioned `adaptive-rules-v1` defaults implement the five PRD actions with deterministic reasons/ties. Thresholds are uncalibrated; low priors without observations are not weakness and scheduled review is not retention loss.
+- The service snapshots replay inputs and persists immutable decisions with a controlled consumed/superseded lifecycle. Freshness combines learner-scoped maximum event ID and committed event count, configuration/catalogue/projection fingerprints and review deadlines. There is at most one active recommendation per learner.
+- `GET /recommendations/next` is allowlisted and returns `409` while an Attempt is active. `POST /attempts/start` consumes only a fresh exact match in the same transaction as its new Attempt/opening event; stale or different-problem decisions are superseded. Idempotent old-start retrieval cannot consume a newer decision.
+- Single-skill/unit-weight mappings permit targeting. Unsupported mappings may supply unattributed catalogue choices, without mastery inference. No LLM, execution-provider, learner-state or historical-event write occurs during recommendation selection.
+- Migration `20261003_0006` follows `20260929_0005`; upgrade, empty-table downgrade, re-upgrade and schema consistency checks passed. Tests cover policy, persistence, service, API and rollback; disposable PostgreSQL concurrency checks passed.
+- No demo seed expansion was required for correctness. The local catalogue has one Easy unmapped problem; isolated fixtures cover multiple skills and Easy/Medium/Hard. Curate demonstration data explicitly later without fabricated learner history. Retention/error targeting and recommendation-quality validation remain deferred.
 
 ## Deferred Work
 
