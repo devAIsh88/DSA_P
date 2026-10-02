@@ -10,6 +10,8 @@ Use, in order: (1) Product PRD v0.3 (`DEV Placement OS.docx`) for long-term dire
 
 Implementation Phases 1 (foundation), 2 (problem system), 3 (execution/evaluation), 4A (Learning Evidence / Session Vault; implementation PRD Phase 4), Phase 4B v1 (learner model; implementation PRD Phase 5), and Phase 6 (AI Tutor) are implemented. Phase 4B v1 uses binary BKT only for independent, single-skill, unit-weight Attempts; assisted evidence informs reporting, not mastery, and multi-skill mastery remains deferred. Phase 6 follows the frozen `docs/architecture/PHASE6_AI_TUTOR_CONTRACT.md`; provider quality still needs opt-in live validation. Ignored research proposals are not implementation authority. Do not start adaptive recommendation or UI work because interfaces appear in a PRD.
 
+Phase 7 implementation is authorized under `docs/architecture/PHASE7_ADAPTIVE_ENGINE_CONTRACT.md`. Recommendations are deterministic, versioned and persisted; they never modify SkillState/mastery or history. Abandonment is not demotion evidence; scheduled review does not prove forgetting. Phase 8 UI is not authorized.
+
 ## Product and Evidence Boundaries
 
 The product is **Learner Model + Evidence + Execution + Evaluation + Adaptive Decision Making + AI**, not a generic LLM chat UI. Preserve this flow: Problem → Attempt → Reasoning / learner actions → Submission → Execution → Deterministic Evaluation → Learning Event / Session Vault → Learner-State Update → Adaptive Decision → Next Activity.

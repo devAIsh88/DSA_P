@@ -269,6 +269,21 @@ This is a milestone-based engineering history. Append new entries in chronologic
 
 - Retry minimal opt-in live verification when the provider is available; separately authorize Phase 7 scope before implementation.
 
+## 2026-10-03 — Phase 7 architecture freeze
+
+### Decisions
+
+- Accepted the deterministic policy/service boundary, five PRD actions, immutable persisted decisions and one active recommendation per learner. Kept skill targeting single-skill/unit-weight and mastery/history unchanged.
+- Corrected evidence-only invalidation: review deadlines, policy and catalogue changes also invalidate. MAX(event ID) is paired with committed event count because allocation order is not commit order. Abandonment is excluded from struggle; review is scheduling, not retention loss. Thresholds remain versioned, uncalibrated MVP defaults.
+
+### Verification
+
+- Baseline: 67 passed, 1 opt-in Judge0 test skipped; Alembic `20260929_0005`. Contract specifies API, lifecycle, transactions, recommendation-only migration and independent tests.
+
+### Next
+
+- Implement Phase 7 under the frozen contract; keep Phase 8 deferred. Architecture checkpoint is recorded in Git.
+
 ## Document Roles
 
 - `docs/PROJECT_STATUS.md` records current truth.

@@ -12,7 +12,9 @@ This plan records completed implementation and the next development boundaries. 
 
 ## Next Objective
 
-Phase 4A supplies persistent evidence, Phase 4B v1 supplies binary single-skill BKT and assisted-activity reporting, and completed Phase 6 supplies bounded tutor flows. Phase 7 adaptive work is next in the implementation sequence and requires separate authorization. Retry opt-in Gemini verification later; the external provider blocker does not block Phase 7 development. Tutor quality/safety validation remains necessary before production use. Preserve the full product flow: Problem → Attempt → Reasoning / learner actions → Submission → Execution → Deterministic Evaluation → Learning Event / Session Vault → Learner-State Update → Adaptive Decision → Next Activity.
+Authorized increment: Phase 7 under `docs/architecture/PHASE7_ADAPTIVE_ENGINE_CONTRACT.md`. Implement pure versioned policy, recommendation persistence in revision 0006, lifecycle service, the single GET endpoint and atomic Attempt-start consumption. Preserve Phase 4B mastery and immutable historical evidence. All thresholds are uncalibrated MVP defaults; scheduled review is not forgetting.
+
+Phase 4A supplies persistent evidence, Phase 4B v1 supplies binary single-skill BKT and assisted-activity reporting, and completed Phase 6 supplies bounded tutor flows. Retry opt-in Gemini verification later; the external provider blocker does not block the authorized Phase 7 work. Tutor quality/safety validation remains necessary before production use. Preserve the full product flow: Problem → Attempt → Reasoning / learner actions → Submission → Execution → Deterministic Evaluation → Learning Event / Session Vault → Learner-State Update → Adaptive Decision → Next Activity.
 
 ## Phase 4A — Learning Evidence / Session Vault
 
@@ -49,4 +51,4 @@ After v1 reporting, define mistake and retention signals from validated evidence
 
 ## Deferred Work
 
-Defer Phase 7 adaptive recommendation, LeetCode ingestion, retention scheduler, neural knowledge tracing, embeddings/RAG expansion, dashboard/UI, fine-tuning, local-model infrastructure, MCP, Kafka, Redis, and Kubernetes. A separate unrestricted final-solution generator and advanced multi-turn agent are also deferred. Their visibility in research or a PRD does not move them into Phase 6.
+Defer LeetCode ingestion, retention modelling/background scheduler, neural knowledge tracing, embeddings/RAG expansion, dashboard/UI, fine-tuning, local-model infrastructure, MCP, Kafka, Redis, and Kubernetes. Phase 7 includes dynamic scheduled review only. A separate unrestricted final-solution generator and advanced multi-turn agent are also deferred.

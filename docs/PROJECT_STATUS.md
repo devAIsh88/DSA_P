@@ -23,7 +23,9 @@ Live Gemini smoke verification reached the Gemini HTTP service with the configur
 
 ## Next
 
-- Retry opt-in live Gemini verification later, then validate tutor output quality, safety, latency, and structured-output reliability before production use. This external blocker does not block Phase 7 development; Phase 7 adaptive implementation still requires separate authorization. Evaluate Phase 4B estimates before accepting new mastery or multi-skill attribution policies.
+- Phase 7 architecture is frozen in `docs/architecture/PHASE7_ADAPTIVE_ENGINE_CONTRACT.md`; implementation is authorized for deterministic recommendation, revision scheduling and persisted lifecycle only. Phase 8 UI remains deferred.
+
+- Retry opt-in live Gemini verification later, then validate tutor output quality, safety, latency, and structured-output reliability before production use. This external blocker does not block Phase 7 development; Phase 7 implementation is now authorized under its frozen contract. Evaluate Phase 4B estimates before accepting new mastery or multi-skill attribution policies.
 
 ## Later
 
