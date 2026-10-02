@@ -242,6 +242,33 @@ This is a milestone-based engineering history. Append new entries in chronologic
 
 - Run opt-in tutor quality/safety benchmarks and review model outputs before production use. Do not begin Phase 7 without separate scope acceptance.
 
+## 2026-10-02 — Phase 6 closeout and blocked live verification
+
+### Completed
+
+- Closed Phase 6 for development: all six tutor endpoints and offline provider integration are complete. Updated status and plan to distinguish completion from externally blocked live verification.
+
+### Issues Encountered
+
+- Controlled live Gemini smoke requests reached the HTTP service with configured authentication, but `gemini-3.8-flash` returned `503 UNAVAILABLE` and `gemini-3.7-flash` returned `504 DEADLINE_EXCEEDED`. No successful live structured output was available to validate; no implementation defect was established.
+
+### Decisions
+
+- Accepted verdict: **Phase 6 complete — live provider verification externally blocked**. Retry Gemini verification later without blocking Phase 7 development. Production quality/safety validation remains outstanding; Phase 7 implementation requires separate authorization.
+
+### Verification
+
+- Offline suite: 67 passed, 1 opt-in Judge0 test skipped. Alembic head remains `20260929_0005`; `alembic check` found no new upgrade operations. No migration or application change was needed for closeout.
+- Failure handling behaved correctly: safe hint fallback remained available; unsuccessful AI operations created no false delivered tutor evidence; hint requests and learner understanding answers remained preserved.
+
+### Git
+
+- Implementation/hardening checkpoint `1d3aaa1` was already synchronized with `origin/main`. This documentation-only closeout is recorded by `docs: close Phase 6 AI tutor implementation` in Git history.
+
+### Next
+
+- Retry minimal opt-in live verification when the provider is available; separately authorize Phase 7 scope before implementation.
+
 ## Document Roles
 
 - `docs/PROJECT_STATUS.md` records current truth.
