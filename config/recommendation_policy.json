@@ -1,0 +1,17 @@
+{
+  "version": "adaptive-rules-v1",
+  "difficulty_order": ["Easy", "Medium", "Hard"],
+  "weak_min_observations": 2,
+  "weak_mastery_threshold": 0.5,
+  "review_min_independent_successes": 1,
+  "review_mastery_threshold": 0.6,
+  "review_interval_days": 7,
+  "promotion_mastery_threshold": 0.7,
+  "promotion_consecutive_solves": 2,
+  "demotion_consecutive_struggles": 2,
+  "demotion_statuses": ["WRONG_ANSWER", "TIME_LIMIT_EXCEEDED", "MEMORY_LIMIT_EXCEEDED"],
+  "assisted_success_hint_level": 4,
+  "avoid_immediate_repetition": true,
+  "allow_unattributed_catalogue": true,
+  "target_track": null
+}
