@@ -213,6 +213,35 @@ This is a milestone-based engineering history. Append new entries in chronologic
 
 - Begin Phase 6 implementation only under the tracked architecture contract and a separate implementation task; keep normal tests provider-independent.
 
+## 2026-10-02 — Phase 6 AI Tutor implementation
+
+### Completed
+
+- Implemented provider-neutral contracts, deterministic mock and hint fallback, the six frozen tutor routes, bounded safe context, versioned prompts/gating, and a Gemini SDK adapter. Added immutable tutor events for delivered feedback, separate hint request/delivery, and separate understanding prompt/answer/evaluation.
+- Preserved deterministic evaluation and binary BKT authority. Tutor flows read learner state for context but do not update SkillState or mastery; recent-error projection remains deferred.
+
+### Issues Encountered
+
+- GitHub HTTPS briefly refused connections after the diagnosis checkpoint; a later push synchronized both diagnosis and post-attempt commits. The local sandbox blocked `pip` inspection of a Windows Python installation; an approved external run installed the SDK and `pip check` passed.
+- Final contract review caught the public fallback source label, client idempotency-key bound, and positive path-ID validation. All were corrected before final verification.
+
+### Decisions
+
+- Kept the configured Gemini model and SDK isolated behind `TutorProvider`. Level 6 has no static fallback because a generic template cannot safely supply a problem-specific solution. Provider failure returns `503` where no safe result exists and preserves separately committed learner actions.
+
+### Verification
+
+- Complete offline suite: 67 passed, 1 opt-in Judge0 test skipped (2026-10-02). Mock API and fake SDK tests cover all six routes, retries, idempotency, partial failure recovery, ownership, hidden-test redaction, malformed output, and unchanged mastery. `pip check` found no broken requirements.
+- PostgreSQL Alembic current/head: `20260929_0005`; `alembic check` found no upgrade operations. No Phase 6 migration. Live Gemini output quality, latency, and account behavior remain unverified.
+
+### Git
+
+- Milestone commits: `3dfaf33` provider foundation; `62db895` hints; `fc6d14b` diagnosis/reasoning; `b8ef535` post-attempt flows; `0546981` Gemini adapter. Each was pushed to `main`; final hardening/documentation checkpoint follows.
+
+### Next
+
+- Run opt-in tutor quality/safety benchmarks and review model outputs before production use. Do not begin Phase 7 without separate scope acceptance.
+
 ## Document Roles
 
 - `docs/PROJECT_STATUS.md` records current truth.

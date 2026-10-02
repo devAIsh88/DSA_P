@@ -21,6 +21,9 @@ def test_tutor_configuration_and_contract_bounds() -> None:
             HintRequest(attempt_id=1, requested_level=level, idempotency_key="k")
     with pytest.raises(ValidationError):
         HintRequest(attempt_id=1, requested_level=1, idempotency_key="")
+    assert HintRequest(attempt_id=1, requested_level=1, idempotency_key="k" * 120).idempotency_key
+    with pytest.raises(ValidationError):
+        HintRequest(attempt_id=1, requested_level=1, idempotency_key="k" * 121)
 
 
 def test_mock_and_hint_only_fallback_are_deterministic() -> None:

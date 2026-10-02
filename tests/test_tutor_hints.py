@@ -60,7 +60,7 @@ def test_request_survives_gate_failure_and_provider_fallback(learner_db) -> None
         "attempt_id": attempt_id, "requested_level": 3, "idempotency_key": "fallback",
     })
     assert result.status_code == 200, result.text
-    assert result.json()["source"] == "deterministic_rule"
+    assert result.json()["source"] == "fallback"
     assert client.post("/hints/request", json={
         "attempt_id": attempt_id, "requested_level": 3, "idempotency_key": "fallback",
     }).json() == result.json()

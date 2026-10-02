@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -114,7 +115,7 @@ class UnderstandingResult(BaseModel):
 
 
 class TutorActionRequest(BaseModel):
-    idempotency_key: str = Field(min_length=1, max_length=100)
+    idempotency_key: str = Field(min_length=1, max_length=120)
 
 
 class HintRequest(TutorActionRequest):
@@ -150,7 +151,7 @@ class HintResponse(BaseModel):
     delivered_level: int
     hint_text: str
     hint_content_id: str
-    source: str
+    source: Literal["model", "fallback"]
 
 
 class DiagnoseResponse(BaseModel):

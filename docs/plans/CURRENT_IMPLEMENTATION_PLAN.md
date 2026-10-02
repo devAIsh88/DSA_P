@@ -12,11 +12,11 @@ This is the active engineering plan for the next planned implementation incremen
 
 ## Next Objective
 
-Phase 4A supplies persistent evidence; Phase 4B v1 supplies binary single-skill BKT and separate assisted-activity reporting. The next implementation increment is the bounded Phase 6 tutor contract: provider abstraction, safe context, diagnosis, reasoning analysis, six-level hints, post-attempt explanation, and a minimal understanding check. Preserve the full product flow: Problem → Attempt → Reasoning / learner actions → Submission → Execution → Deterministic Evaluation → Learning Event / Session Vault → Learner-State Update → Adaptive Decision → Next Activity. Do not begin Phase 7 adaptive work as part of tutor implementation.
+Phase 4A supplies persistent evidence, Phase 4B v1 supplies binary single-skill BKT and assisted-activity reporting, and Phase 6 supplies bounded tutor flows. The next recommended work is opt-in tutor quality/safety validation and review of observed model behavior; Phase 7 adaptive implementation is not authorized. Preserve the full product flow: Problem → Attempt → Reasoning / learner actions → Submission → Execution → Deterministic Evaluation → Learning Event / Session Vault → Learner-State Update → Adaptive Decision → Next Activity.
 
 ## Phase 4A — Learning Evidence / Session Vault
 
-Implemented in migration `20260929_0004`. The active code stores canonical reasoning text in `REASONING_RECORDED.evidence`, keeps committed events append-only, and uses the MVP PRD Attempt route names. Public hint and understanding-check APIs remain deferred.
+Implemented in migration `20260929_0004`. The active code stores canonical reasoning text in `REASONING_RECORDED.evidence`, keeps committed events append-only, and uses the MVP PRD Attempt route names. Public hint and understanding-check APIs were added later in Phase 6.
 
 - `Attempt` groups one learner engagement with a problem. **Attempt ≠ Submission**: one Attempt can contain multiple existing Submissions and interventions.
 - `LearningEvent` persists meaningful actions and execution/evaluation results with ordering, references, and source provenance. Do not rewrite raw evidence to fit a later interpretation.
@@ -39,12 +39,12 @@ After v1 reporting, define mistake and retention signals from validated evidence
 - A problem may supply evidence for multiple skills. `ProblemSkill` stores the relation, but multi-skill attribution and evidence weighting remain unimplemented. Do not duplicate raw LearningEvents merely to cause multiple mastery updates. Define attribution before implementing multi-skill updates.
 - Keep focused tests for implemented BKT updates, provenance, replay, eligibility, transaction failure, and hidden-evidence protection. Add hint and multi-skill policy tests only when those policies are implemented.
 
-## Phase 6 — AI Tutor (architecture frozen; implementation not started)
+## Phase 6 — AI Tutor (implemented; offline verification complete)
 
-- Implement typed, replaceable `TutorProvider` with one `GeminiTutorProvider` using `google-genai`; keep `gemini-3.8-flash` a configurable initial model default. Use `MockTutorProvider` for normal tests and a hint-only deterministic fallback. The application controls hint level and Level 6 gating.
-- Implement only the six public routes and exact schemas, statuses, idempotency, events, and failure behavior in `docs/architecture/PHASE6_AI_TUTOR_CONTRACT.md`. Retain the implementation PRD's `POST /hints/request` path. A hint request may persist without a delivery; an understanding answer may persist without AI evaluation.
-- Store delivered/received interaction content as event evidence, AI classification/confidence as derived labels, and provider/model/prompt/policy identity as provenance. Do not amend committed history or treat provider output as correctness. If recent-error projection is feasible, replay committed diagnosis events deterministically; otherwise defer it. Never change mastery through tutor flows.
-- Assemble bounded learner-owned context without hidden tests, expected outputs, protected diagnostics, secrets, or full chat history. Test provider failures, partial-event recovery, learner-safe allowlists, gate behavior, idempotency, and all Phase 1–4B regressions. No migration is accepted; Alembic head stays `20260929_0005`.
+- Typed `TutorProvider`, deterministic mock, hint-only fallback, and `GeminiTutorProvider` using `google-genai` are implemented. `gemini-3.8-flash` is a configurable default. The application controls hint levels and the configurable Level 6 gate.
+- The six routes in the frozen contract are implemented, including PRD `POST /hints/request`, separate request/delivery events, and an understanding answer committed before optional AI evaluation. Provider failures preserve learner evidence and do not block core execution/evaluation.
+- Delivered/received content is evidence; AI classification/confidence is derived labels; provider/model/prompt identity is provenance. Committed events are not amended. Tutor flows do not update `SkillState` or mastery; `recent_error_types` projection remains deferred until a deterministic replay rule is accepted.
+- Bounded learner-owned context excludes hidden tests, expected outputs, protected diagnostics, secrets, and full chat history. Normal tests use mocks/fake SDK clients. Live Gemini quality and model behavior remain unverified. No migration was created; Alembic head stays `20260929_0005`.
 
 ## Deferred Work
 

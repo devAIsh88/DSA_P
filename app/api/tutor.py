@@ -1,6 +1,8 @@
 """Thin Attempt-scoped Phase 6 tutor routes."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -32,7 +34,7 @@ def _tutor_error(error: Exception) -> HTTPException:
 
 @router.post("/{attempt_id}/diagnose", response_model=DiagnoseResponse)
 async def diagnose(
-    attempt_id: int, payload: DiagnoseRequest, db: Session = Depends(get_db),
+    attempt_id: Annotated[int, Path(gt=0)], payload: DiagnoseRequest, db: Session = Depends(get_db),
     provider: TutorProvider = Depends(get_tutor_provider),
 ) -> DiagnoseResponse:
     try:
@@ -44,7 +46,7 @@ async def diagnose(
 
 @router.post("/{attempt_id}/reasoning-analysis", response_model=ReasoningAnalysisResponse)
 async def reasoning_analysis(
-    attempt_id: int, payload: ReasoningAnalysisRequest, db: Session = Depends(get_db),
+    attempt_id: Annotated[int, Path(gt=0)], payload: ReasoningAnalysisRequest, db: Session = Depends(get_db),
     provider: TutorProvider = Depends(get_tutor_provider),
 ) -> ReasoningAnalysisResponse:
     try:
@@ -56,7 +58,7 @@ async def reasoning_analysis(
 
 @router.post("/{attempt_id}/post-explanation", response_model=PostExplanationResponse)
 async def post_explanation(
-    attempt_id: int, payload: PostExplanationRequest, db: Session = Depends(get_db),
+    attempt_id: Annotated[int, Path(gt=0)], payload: PostExplanationRequest, db: Session = Depends(get_db),
     provider: TutorProvider = Depends(get_tutor_provider),
 ) -> PostExplanationResponse:
     try:
@@ -68,7 +70,7 @@ async def post_explanation(
 
 @router.post("/{attempt_id}/understanding-checks", response_model=UnderstandingCheckResponse)
 def understanding_check(
-    attempt_id: int, payload: UnderstandingCheckRequest, db: Session = Depends(get_db),
+    attempt_id: Annotated[int, Path(gt=0)], payload: UnderstandingCheckRequest, db: Session = Depends(get_db),
 ) -> UnderstandingCheckResponse:
     try:
         return request_understanding_check(db, attempt_id, payload)
@@ -80,7 +82,8 @@ def understanding_check(
 @router.post("/{attempt_id}/understanding-checks/{check_event_id}/answer",
              response_model=UnderstandingAnswerResponse)
 async def understanding_answer(
-    attempt_id: int, check_event_id: int, payload: UnderstandingAnswerRequest,
+    attempt_id: Annotated[int, Path(gt=0)], check_event_id: Annotated[int, Path(gt=0)],
+    payload: UnderstandingAnswerRequest,
     db: Session = Depends(get_db), provider: TutorProvider = Depends(get_tutor_provider),
 ) -> UnderstandingAnswerResponse:
     try:

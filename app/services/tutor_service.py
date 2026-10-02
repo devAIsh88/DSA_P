@@ -83,7 +83,7 @@ def _hint_response(attempt_id: int, request: LearningEvent, delivery: LearningEv
         delivered_level=delivery.evidence["hint_level_delivered"],
         hint_text=delivery.evidence["hint_text"],
         hint_content_id=delivery.evidence["hint_content_id"],
-        source=delivery.provenance["source"],
+        source="fallback" if delivery.provenance.get("provider") == "fallback" else "model",
     )
 
 
