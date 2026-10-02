@@ -101,15 +101,20 @@ def _terminal_facts(db: Session, events: list[LearningEvent]) -> tuple[TerminalE
                  if item.attempt_sequence < event.attempt_sequence and item.id < event.id
                  and item.problem_id == event.problem_id and item.user_id == event.user_id]
         final_id = evidence.get("final_submission_id")
+        if final_id is not None and (type(final_id) is not int or final_id <= 0):
+            raise LearnerStateNotReadyError("Invalid historical submission reference")
         evaluation = next((item for item in prior if item.event_type == "SUBMISSION_EVALUATED"
                            and type(final_id) is int and item.submission_id == final_id
                            and isinstance(item.provenance, dict)
                            and item.provenance.get("source") == "execution_evaluation_engine"), None)
+        if final_id is not None and evaluation is None:
+            raise LearnerStateNotReadyError("Referenced deterministic evaluation is missing")
         final_status = evaluation.evidence.get("overall_status") if evaluation is not None else None
         if outcome == "SOLVED":
             total = evaluation.evidence.get("tests_total") if evaluation is not None else None
             passed = evaluation.evidence.get("tests_passed") if evaluation is not None else None
-            if final_status != "ACCEPTED" or type(total) is not int or total <= 0 or passed != total:
+            if (final_status != "ACCEPTED" or type(total) is not int or total <= 0
+                    or type(passed) is not int or passed != total):
                 continue
         hints = [item for item in prior if item.event_type in ("HINT_REQUESTED", "HINT_DELIVERED")]
         levels = [item.evidence.get("hint_level_delivered") for item in hints
@@ -136,6 +141,9 @@ def load_adaptive_inputs(
 
     events = list(db.scalars(select(LearningEvent).where(LearningEvent.user_id == user_id)
                            .order_by(LearningEvent.id).execution_options(populate_existing=True)))
+    relevant_types = {"ATTEMPT_COMPLETED", "SUBMISSION_EVALUATED", "HINT_REQUESTED", "HINT_DELIVERED"}
+    if any(event.event_type in relevant_types and not isinstance(event.evidence, dict) for event in events):
+        raise LearnerStateNotReadyError("Historical adaptive evidence must be structured")
     through = events[-1].id if events else None
     candidates, catalogue = _catalogue(db)
     facts = _terminal_facts(db, events)
@@ -147,6 +155,9 @@ def load_adaptive_inputs(
         if event.attempt_id not in seen and reportable_completion(event):
             expected.setdefault(event.skill_id, []).append(event)
             seen.add(event.attempt_id)
+    valid_completions = {fact.event_id for fact in facts}
+    if any(event.id not in valid_completions for history in expected.values() for event in history):
+        raise LearnerStateNotReadyError("Supported historical completion cannot be validated")
     by_skill = {state.skill_id: state for state in states}
     param_version = load_bkt_parameters().version
     for skill_id, history in expected.items():

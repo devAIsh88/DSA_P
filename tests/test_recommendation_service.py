@@ -6,7 +6,7 @@ import json
 from datetime import timedelta
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import SQLAlchemyError
 
 from adaptive_fixtures import FrozenClock, NOW, PRIVATE_MARKERS, create_adaptive_database
@@ -358,3 +358,151 @@ def test_missing_or_ambiguous_learner_does_not_create_one(adaptive_db) -> None:
     with pytest.raises(LearnerNotFoundError):
         next_result(adaptive_db)
     assert not stored_rows(adaptive_db)
+
+
+@pytest.mark.parametrize("event_type", ["SUBMISSION_EVALUATED", "HINT_REQUESTED", "HINT_DELIVERED", "ATTEMPT_COMPLETED"])
+@pytest.mark.parametrize("malformed", [[], "unstructured", None])
+def test_corrupt_structured_history_fails_closed_without_mutation(adaptive_db, event_type, malformed) -> None:
+    adaptive_db.solve(1, hint_level=4)
+    # Core SQL represents external database corruption; normal application
+    # services do not revise committed historical evidence.
+    with adaptive_db.factory() as db:
+        event_id = db.scalar(select(LearningEvent.id).where(LearningEvent.event_type == event_type))
+        db.execute(update(LearningEvent).where(LearningEvent.id == event_id).values(evidence=malformed))
+        db.commit()
+    before = source_snapshot(adaptive_db)
+    with pytest.raises(LearnerStateNotReadyError):
+        next_result(adaptive_db)
+    assert not stored_rows(adaptive_db)
+    assert source_snapshot(adaptive_db) == before
+
+
+@pytest.mark.parametrize("invalid_part", ["source", "validation_source", "validation_rule"])
+def test_supported_completion_with_invalid_authority_fails_closed(adaptive_db, invalid_part) -> None:
+    adaptive_db.solve(1)
+    with adaptive_db.factory() as db:
+        completion = db.scalar(select(LearningEvent).where(LearningEvent.event_type == "ATTEMPT_COMPLETED"))
+        provenance = json.loads(json.dumps(completion.provenance))
+        if invalid_part == "source":
+            provenance["source"] = "llm_model"
+        elif invalid_part == "validation_source":
+            provenance["validation"]["source"] = "llm_model"
+        else:
+            provenance["validation"]["rule_id"] = "unknown_rule"
+        db.execute(update(LearningEvent).where(LearningEvent.id == completion.id).values(provenance=provenance))
+        db.commit()
+    before = source_snapshot(adaptive_db)
+    with pytest.raises(LearnerStateNotReadyError):
+        next_result(adaptive_db)
+    assert not stored_rows(adaptive_db)
+    assert source_snapshot(adaptive_db) == before
+
+
+@pytest.mark.parametrize("outcome", ["SOLVED", "GAVE_UP"])
+@pytest.mark.parametrize("invalid_reference", [True, "1", -1])
+def test_nonnull_malformed_submission_reference_fails_closed(adaptive_db, outcome, invalid_reference) -> None:
+    if outcome == "SOLVED":
+        adaptive_db.solve(1)
+    else:
+        adaptive_db.give_up(1)
+    with adaptive_db.factory() as db:
+        completion = db.scalar(select(LearningEvent).where(LearningEvent.event_type == "ATTEMPT_COMPLETED"))
+        evidence = {**completion.evidence, "final_submission_id": invalid_reference}
+        db.execute(update(LearningEvent).where(LearningEvent.id == completion.id).values(evidence=evidence))
+        db.commit()
+    before = source_snapshot(adaptive_db)
+    with pytest.raises(LearnerStateNotReadyError):
+        next_result(adaptive_db)
+    assert not stored_rows(adaptive_db)
+    assert source_snapshot(adaptive_db) == before
+
+
+@pytest.mark.parametrize("outcome", ["SOLVED", "GAVE_UP"])
+@pytest.mark.parametrize("broken_reference", ["missing_evaluation", "wrong_engine", "not_prior", "wrong_problem"])
+def test_referenced_submission_needs_prior_matching_engine_evidence(adaptive_db, outcome, broken_reference) -> None:
+    if outcome == "SOLVED":
+        adaptive_db.solve(1)
+    else:
+        adaptive_db.give_up(1)
+    with adaptive_db.factory() as db:
+        evaluation = db.scalar(select(LearningEvent).where(LearningEvent.event_type == "SUBMISSION_EVALUATED"))
+        if broken_reference == "missing_evaluation":
+            db.execute(delete(LearningEvent).where(LearningEvent.id == evaluation.id))
+        elif broken_reference == "wrong_engine":
+            provenance = {**evaluation.provenance, "source": "llm_model"}
+            db.execute(update(LearningEvent).where(LearningEvent.id == evaluation.id).values(provenance=provenance))
+        elif broken_reference == "not_prior":
+            db.execute(update(LearningEvent).where(LearningEvent.id == evaluation.id).values(attempt_sequence=4))
+        else:
+            db.execute(update(LearningEvent).where(LearningEvent.id == evaluation.id).values(problem_id=2))
+        db.commit()
+    before = source_snapshot(adaptive_db)
+    with pytest.raises(LearnerStateNotReadyError):
+        next_result(adaptive_db)
+    assert not stored_rows(adaptive_db)
+    assert source_snapshot(adaptive_db) == before
+
+
+def test_boolean_passed_count_cannot_validate_solved_outcome(adaptive_db) -> None:
+    adaptive_db.solve(1)
+    with adaptive_db.factory() as db:
+        evaluation = db.scalar(select(LearningEvent).where(LearningEvent.event_type == "SUBMISSION_EVALUATED"))
+        # Python True == 1; an explicit integer check must distinguish this corruption.
+        evidence = {**evaluation.evidence, "tests_total": 1, "tests_passed": True}
+        db.execute(update(LearningEvent).where(LearningEvent.id == evaluation.id).values(evidence=evidence))
+        db.commit()
+    before = source_snapshot(adaptive_db)
+    with pytest.raises(LearnerStateNotReadyError):
+        next_result(adaptive_db)
+    assert not stored_rows(adaptive_db)
+    assert source_snapshot(adaptive_db) == before
+
+
+def test_declared_give_up_without_submission_retains_valid_binary_evidence(adaptive_db) -> None:
+    adaptive_db.give_up(1, evaluated=False)
+    before = source_snapshot(adaptive_db)
+    response = next_result(adaptive_db)
+    assert response.recommendation is not None
+    with adaptive_db.factory() as db:
+        inputs = load_adaptive_inputs(db, 1, NOW, RecommendationPolicyConfig())
+    terminal = inputs.context.attempts[0]
+    assert terminal.final_status is None
+    assert terminal.outcome == "GAVE_UP"
+    assert terminal.binary_correct == 0
+    assert source_snapshot(adaptive_db) == before
+
+
+def test_loaded_abandonment_breaks_evaluated_demotion_run(adaptive_db) -> None:
+    adaptive_db.give_up(3)
+    abandoned_id = adaptive_db.abandon(3)
+    adaptive_db.give_up(3)
+    before = source_snapshot(adaptive_db)
+    response = next_result(adaptive_db)
+    assert response.recommendation.action_type == "RETRY_SIMILAR_PROBLEM"
+    assert response.recommendation.reason_codes == ("EVALUATED_FAILURE_RETRY",)
+    assert response.recommendation.problem_id == 3
+    with adaptive_db.factory() as db:
+        inputs = load_adaptive_inputs(db, 1, NOW, RecommendationPolicyConfig())
+    abandoned = next(fact for fact in inputs.context.attempts if fact.attempt_id == abandoned_id)
+    assert abandoned.status == "ABANDONED" and abandoned.skill_id == 1
+    assert abandoned.binary_correct is None
+    assert source_snapshot(adaptive_db) == before
+
+
+def test_loaded_abandonment_breaks_independent_promotion_run(adaptive_db) -> None:
+    adaptive_db.solve(1)
+    abandoned_id = adaptive_db.abandon(1)
+    adaptive_db.solve(2)
+    with adaptive_db.factory() as db:
+        assert db.get(SkillState, (1, 1)).mastery_probability >= 0.70
+    before = source_snapshot(adaptive_db)
+    response = next_result(adaptive_db)
+    assert response.recommendation.action_type == "NEXT_PROBLEM"
+    assert response.recommendation.reason_codes == ("UNPRACTICED_SKILL",)
+    assert response.recommendation.problem_id == 4
+    with adaptive_db.factory() as db:
+        inputs = load_adaptive_inputs(db, 1, NOW, RecommendationPolicyConfig())
+    abandoned = next(fact for fact in inputs.context.attempts if fact.attempt_id == abandoned_id)
+    assert abandoned.status == "ABANDONED" and abandoned.skill_id == 1
+    assert abandoned.binary_correct is None
+    assert source_snapshot(adaptive_db) == before
