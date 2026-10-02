@@ -221,6 +221,11 @@ class RecommendationResponse(BaseModel):
     reason_codes: tuple[RecommendationReasonCode, ...]
     created_at: datetime
 
+    @field_validator("created_at")
+    @classmethod
+    def utc_time(cls, value: datetime) -> datetime:
+        return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
+
 
 class NextRecommendationResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")

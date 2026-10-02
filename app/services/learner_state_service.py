@@ -221,6 +221,18 @@ def project_completion_event(db: Session, event: LearningEvent) -> SkillState | 
     return rebuild_skill_state(db, event.user_id, event.skill_id)
 
 
+def eligible_binary_observation(db: Session, event: LearningEvent) -> TracingObservation | None:
+    """Share the existing v1 read-only evidence rule with downstream consumers."""
+
+    return _eligible_observation(db, event)
+
+
+def reportable_completion(event: LearningEvent) -> bool:
+    """Expose v1 historical attribution without rebuilding or mutating state."""
+
+    return _reportable_completion(event)
+
+
 def list_skill_states(db: Session, user_id: int) -> list[SkillState]:
     """Return projections for the single authenticated-by-context MVP learner."""
 
