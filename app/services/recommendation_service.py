@@ -126,8 +126,10 @@ def recommendation_for_new_attempt(
     if current is None:
         return None
     try:
-        inputs = load_adaptive_inputs(db, user_id, now, load_policy_config())
-        fresh = _fresh(current, inputs, now)
+        config = load_policy_config()
+        inputs = load_adaptive_inputs(db, user_id, now, config)
+        fresh = (_fresh(current, inputs, now)
+                 and load_adaptive_inputs(db, user_id, now, config).fingerprint == inputs.fingerprint)
     except (LearnerStateNotReadyError, ValueError, OSError):
         fresh = False
     if not fresh or current.problem_id != problem_id:

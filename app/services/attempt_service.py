@@ -89,35 +89,46 @@ def _prior_event(db: Session, attempt_id: int, key: str | None, expected: Learni
 
 
 def start_attempt(db: Session, payload: AttemptStart) -> Attempt:
-    """Start one active engagement and append its opening event atomically."""
+    """Start an engagement and consume only its fresh exact recommendation atomically."""
 
-    if payload.user_id != single_learner_id(db):
-        raise LearnerIdentityError("Requested learner is not the active learner")
-    if db.get(Problem, payload.problem_id) is None:
-        raise AttemptProblemNotFoundError
-    if payload.idempotency_key is not None:
-        earlier = db.scalar(select(Attempt).where(
-            Attempt.user_id == payload.user_id, Attempt.idempotency_key == payload.idempotency_key,
-        ))
-        if earlier is not None:
-            if earlier.problem_id != payload.problem_id:
-                raise AttemptConflictError("Idempotency key was used for another problem")
-            return earlier
-    active = db.scalar(select(Attempt).where(
-        Attempt.user_id == payload.user_id,
-        Attempt.problem_id == payload.problem_id,
-        Attempt.status == "ACTIVE",
-    ))
-    if active is not None:
-        raise AttemptConflictError("An active Attempt already exists for this problem")
-    now = datetime.now(UTC)
-    attempt = Attempt(
-        user_id=payload.user_id, problem_id=payload.problem_id, status="ACTIVE",
-        outcome=None, started_at=now, idempotency_key=payload.idempotency_key,
+    # Local imports keep the existing learner identity boundary reusable by the
+    # recommendation service without a module import cycle.
+    from app.services.recommendation_service import (
+        consume_for_new_attempt, lock_learner, recommendation_for_new_attempt,
     )
+
     try:
+        if payload.user_id != single_learner_id(db):
+            raise LearnerIdentityError("Requested learner is not the active learner")
+        lock_learner(db, payload.user_id)
+        if db.get(Problem, payload.problem_id) is None:
+            raise AttemptProblemNotFoundError
+        if payload.idempotency_key is not None:
+            earlier = db.scalar(select(Attempt).where(
+                Attempt.user_id == payload.user_id, Attempt.idempotency_key == payload.idempotency_key,
+            ))
+            if earlier is not None:
+                if earlier.problem_id != payload.problem_id:
+                    raise AttemptConflictError("Idempotency key was used for another problem")
+                # Retrieval of an old engagement must not consume a newer decision.
+                db.commit()
+                return earlier
+        active = db.scalar(select(Attempt).where(
+            Attempt.user_id == payload.user_id,
+            Attempt.problem_id == payload.problem_id,
+            Attempt.status == "ACTIVE",
+        ))
+        if active is not None:
+            raise AttemptConflictError("An active Attempt already exists for this problem")
+        now = datetime.now(UTC)
+        recommendation = recommendation_for_new_attempt(db, payload.user_id, payload.problem_id, now)
+        attempt = Attempt(
+            user_id=payload.user_id, problem_id=payload.problem_id, status="ACTIVE",
+            outcome=None, started_at=now, idempotency_key=payload.idempotency_key,
+        )
         db.add(attempt)
         db.flush()
+        consume_for_new_attempt(recommendation, attempt, now)
         append_event(
             db, attempt.id, LearningEventType.ATTEMPT_STARTED,
             {"schema_version": 1, "problem_id": payload.problem_id, "user_id": payload.user_id,
@@ -135,6 +146,9 @@ def start_attempt(db: Session, payload: AttemptStart) -> Attempt:
             if earlier is not None and earlier.problem_id == payload.problem_id:
                 return earlier
         raise AttemptConflictError("An active Attempt already exists for this problem") from error
+    except Exception:
+        db.rollback()
+        raise
     db.refresh(attempt)
     return attempt
 
