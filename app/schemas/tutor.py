@@ -75,6 +75,8 @@ class GenerationProvenance(BaseModel):
     prompt_version: str
     schema_version: str = "tutor-v1"
     invocation_id: str | None = None
+    served_model_id: str | None = None
+    max_output_tokens: int | None = None
 
 
 class HintResult(BaseModel):
