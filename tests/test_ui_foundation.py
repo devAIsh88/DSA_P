@@ -1,6 +1,7 @@
 """UI contracts/state are deterministic and require no running HTTP service."""
 
 from pathlib import Path
+import ast
 
 import httpx
 import pytest
@@ -12,6 +13,7 @@ from app.schemas.submission import SubmissionCreate
 from frontend.api_client import APIClient, APIError
 from frontend.config import UISettings
 from frontend.state import finish_operation, operation_key, positive_id
+from frontend.views import home
 
 
 def test_client_parses_learner_schema():
@@ -74,6 +76,28 @@ def test_operation_identity_survives_retry_and_changes_with_payload():
     assert not state["operations"]
 
 
+def test_malformed_error_code_is_safe():
+    client = APIClient("http://test", transport=httpx.MockTransport(lambda request: httpx.Response(
+        503, json={"detail": {"code": {"SECRET": "private"}}})))
+    with pytest.raises(APIError) as error:
+        client.learner()
+    assert error.value.status == 503
+    assert "SECRET" not in str(error.value)
+
+
+def test_frontend_has_no_database_provider_access_or_dynamic_execution():
+    forbidden = ("sqlalchemy", "app.models", "app.db", "app.services", "google", "subprocess")
+    root = Path(__file__).resolve().parents[1] / "frontend"
+    for path in root.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            modules = [node.module or ""] if isinstance(node, ast.ImportFrom) else (
+                [item.name for item in node.names] if isinstance(node, ast.Import) else [])
+            assert not any(module.startswith(forbidden) for module in modules), path
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                assert node.func.id not in {"exec", "eval", "compile"}, path
+
+
 @pytest.mark.parametrize("value,expected", [("4", 4), (None, None), ("-1", None), ("secret", None), ("0", None)])
 def test_url_identifiers(value, expected):
     assert positive_id(value) == expected
@@ -88,7 +112,10 @@ def test_ui_config_contains_no_provider_or_database_fields(monkeypatch):
 
 
 def test_shell_connects_without_provider_calls(monkeypatch):
+    import streamlit as st
+
     monkeypatch.setenv("UI_LEARNER_ID", "7")
+    monkeypatch.setattr(home, "render_home", lambda client, learner: st.header("Home / Progress"))
     monkeypatch.setattr(APIClient, "learner", lambda self: LearnerStateResponse(
         user_id=7, active_attempts=[], skills=[]))
     app = AppTest.from_file(Path(__file__).resolve().parents[1] / "frontend/app.py").run()

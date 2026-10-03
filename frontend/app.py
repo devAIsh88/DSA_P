@@ -12,6 +12,9 @@ from pydantic import ValidationError
 from frontend.api_client import APIClient, APIError
 from frontend.config import UISettings
 from frontend.state import positive_id
+from frontend.interaction import render_notice
+from frontend.views.home import render_home
+from frontend.views.workspace import render_workspace
 
 
 def main() -> None:
@@ -39,14 +42,13 @@ def main() -> None:
     if st.sidebar.button("Home / Progress"):
         st.query_params.clear()
         st.rerun()
+    render_notice()
     attempt_id = positive_id(st.query_params.get("attempt_id"))
     problem_id = positive_id(st.query_params.get("problem_id"))
     if attempt_id or problem_id:
-        st.header("Problem Workspace")
-        st.info("Workspace integration is the next implementation checkpoint.")
+        render_workspace(client, learner, problem_id, attempt_id)
     else:
-        st.header("Home / Progress")
-        st.caption(f"Learner {learner.user_id} • backend state connected")
+        render_home(client, learner)
 
 
 if __name__ == "__main__":

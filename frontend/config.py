@@ -22,6 +22,8 @@ class UISettings(BaseSettings):
     @classmethod
     def safe_base_url(cls, value: str) -> str:
         parsed = urlsplit(value)
+        # Accessing port validates malformed values before creating an HTTP client.
+        parsed.port
         if (parsed.scheme not in {"http", "https"} or not parsed.hostname
                 or parsed.username or parsed.password or parsed.query or parsed.fragment):
             raise ValueError("UI_API_BASE_URL must be an HTTP URL without credentials, query or fragment")

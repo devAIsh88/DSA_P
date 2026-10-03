@@ -51,7 +51,7 @@ class APIClient:
         try:
             with httpx.Client(base_url=self.base_url, timeout=self.timeout, transport=self.transport) as client:
                 response = client.request(method, path, json=payload.model_dump(mode="json") if payload else None)
-        except httpx.RequestError as error:
+        except (httpx.RequestError, httpx.InvalidURL) as error:
             raise APIError("The server response was not received. Check saved state before retrying.",
                            code="NETWORK_UNAVAILABLE") from error
         if response.is_error:
@@ -59,7 +59,7 @@ class APIClient:
             attempt_ids: tuple[int, ...] = ()
             try:
                 detail = response.json().get("detail")
-                if isinstance(detail, dict) and detail.get("code") in _PUBLIC_CODES:
+                if isinstance(detail, dict) and isinstance(detail.get("code"), str) and detail["code"] in _PUBLIC_CODES:
                     code = detail["code"]
                     ids = detail.get("attempt_ids", [])
                     if isinstance(ids, list):
