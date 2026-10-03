@@ -10,10 +10,10 @@ from app.models.test_case import TestCase
 from app.models.test_result import TestResult
 from app.schemas.execution import ExecutionRequest, ExecutionStatus, TestCaseExecution
 from app.schemas.learning_event import EvidenceSource, LearningEventType
-from app.schemas.submission import SubmissionCreate, SubmissionResultResponse, TestResultResponse
+from app.schemas.submission import SubmissionCreate, SubmissionReadResponse, SubmissionResultResponse, TestResultResponse
 from app.services.evaluation_service import EvaluationService
 from app.services.execution_service import ExecutionProvider
-from app.services.attempt_service import ensure_attempt_owner
+from app.services.attempt_service import ensure_attempt_owner, single_learner_id
 from app.services.learning_event_service import append_event, event_by_key, hint_summary, lock_attempt
 from app.services.problem_service import ProblemNotFoundError
 
@@ -24,6 +24,30 @@ class SubmissionAttemptNotFoundError(Exception):
 
 class SubmissionConflictError(Exception):
     """The Attempt or retry key conflicts with this submission."""
+
+
+class SubmissionNotFoundError(Exception):
+    """The requested persisted Submission does not exist."""
+
+
+def get_submission(db: Session, submission_id: int) -> SubmissionReadResponse:
+    """Recover only Attempt-owned source; unlinked Phase 3 rows lack a safe owner."""
+
+    single_learner_id(db)
+    submission = db.get(Submission, submission_id)
+    if submission is None:
+        raise SubmissionNotFoundError
+    if submission.attempt_id is None:
+        raise SubmissionConflictError("Unlinked submission ownership cannot be established")
+    attempt = db.get(Attempt, submission.attempt_id)
+    if attempt is None:
+        raise SubmissionConflictError("Submission ownership cannot be established")
+    ensure_attempt_owner(db, attempt)
+    return SubmissionReadResponse(
+        **_persisted_response(db, submission).model_dump(),
+        problem_id=submission.problem_id, attempt_id=submission.attempt_id,
+        language=submission.language, code=submission.source_code, created_at=submission.created_at,
+    )
 
 
 def _validate_attempt(db: Session, attempt: Attempt | None, problem_id: int) -> Attempt:

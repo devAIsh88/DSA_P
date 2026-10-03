@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.schemas.execution import ExecutionStatus
@@ -48,3 +50,13 @@ class SubmissionResultResponse(BaseModel):
     execution_time_ms: float | None
     memory_used_kb: float | None
     test_results: list[TestResultResponse]
+
+
+class SubmissionReadResponse(SubmissionResultResponse):
+    """Owned source and redacted results required to recover a persisted workspace."""
+
+    problem_id: int
+    attempt_id: int | None
+    language: str
+    code: str
+    created_at: datetime

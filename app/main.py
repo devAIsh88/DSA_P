@@ -8,6 +8,8 @@ from app.api.problems import router as problems_router
 from app.api.recommendations import router as recommendations_router
 from app.api.submissions import router as submissions_router
 from app.api.tutor import router as tutor_router
+from app.api.runs import router as runs_router
+from app.api.dashboard import router as dashboard_router
 from app.config import get_settings
 
 settings = get_settings()
@@ -20,3 +22,5 @@ app.include_router(problems_router)
 app.include_router(recommendations_router)
 app.include_router(submissions_router)
 app.include_router(tutor_router)
+app.include_router(runs_router)
+app.include_router(dashboard_router)

@@ -4,8 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.schemas.dashboard import LearnerStateResponse
 from app.schemas.skill_state import SkillStateResponse
 from app.services.attempt_service import LearnerIdentityError, LearnerNotFoundError, single_learner_id
+from app.services.dashboard_service import get_learner_state
 from app.services.learner_state_service import get_skill_state, list_skill_states
 
 
@@ -15,6 +17,16 @@ router = APIRouter(prefix="/learner", tags=["learner"])
 def _learner_id(db: Session) -> int:
     try:
         return single_learner_id(db)
+    except LearnerNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Learner not found") from error
+    except LearnerIdentityError as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+
+
+@router.get("/state", response_model=LearnerStateResponse)
+def read_learner_state(db: Session = Depends(get_db)) -> LearnerStateResponse:
+    try:
+        return get_learner_state(db)
     except LearnerNotFoundError as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Learner not found") from error
     except LearnerIdentityError as error:
