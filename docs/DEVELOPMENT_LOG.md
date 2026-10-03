@@ -322,6 +322,26 @@ This is a milestone-based engineering history. Append new entries in chronologic
 
 - Phase 8 readiness/architecture review only; UI implementation needs separate authorization. Retry externally blocked live Gemini verification independently. Recommendation-quality evaluation remains Phase 9 work; do not claim calibrated thresholds or optimal recommendations.
 
+## 2026-10-03 — Phase 8 UI architecture freeze
+
+### Decisions
+
+- Accepted Streamlit per the MVP PRD, two primary screens, explicit local learner/demo provisioning and server-authoritative recovery. Resolved missing submission/learner/dashboard reads with allowlisted ownership-scoped DTOs and truthful reporting denominators.
+- Separated sample-only isolated Run from persisted Submit; Run writes no learner evidence, mastery or recommendations. Refresh restores committed state, not unsaved drafts; understanding answers survive AI failure without automatic resubmission.
+- Preserved frozen BKT, tutor and adaptive semantics. No new schema, authentication or browser-storage infrastructure is required. Phase 9 remains deferred.
+
+### Verification
+
+- Starting HEAD `4a2abb4`, clean and synchronized after fetch. Baseline: 263 passed, 1 opt-in Judge0 test skipped; Alembic `20261003_0006 (head)`. The local catalogue has no learner and no useful mappings, so explicit provisioning is necessary for the demo.
+
+### Git
+
+- Architecture checkpoint: `docs: freeze Phase 8 UI architecture`; Git records the exact revision and push.
+
+### Next
+
+- Implement safe backend support, demo provisioning and the Streamlit learning loop under the frozen contract.
+
 ## Document Roles
 
 - `docs/PROJECT_STATUS.md` records current truth.

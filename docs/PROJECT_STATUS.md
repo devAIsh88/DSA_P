@@ -26,7 +26,7 @@ Live Gemini smoke verification reached the Gemini HTTP service with the configur
 
 ## Next
 
-- Phase 8 readiness/architecture review only; UI implementation requires separate authorization.
+- Phase 8 implementation is authorized under the frozen `docs/architecture/PHASE8_UI_CONTRACT.md`: Streamlit, safe backend reads, sample-only Run, explicit demo provisioning and server-authoritative recovery. No new schema or change to mastery/recommendation semantics is planned.
 
 - Retry opt-in live Gemini verification later, then validate tutor output quality, safety, latency, and structured-output reliability before production use. This external blocker did not block Phase 7 completion. Evaluate Phase 4B estimates before accepting new mastery or multi-skill attribution policies.
 

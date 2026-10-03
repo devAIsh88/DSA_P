@@ -14,7 +14,7 @@ This plan records completed implementation and the next development boundaries. 
 
 ## Next Objective
 
-Next boundary: Phase 8 readiness/architecture review only. Do not implement UI before separate scope acceptance. Phase 7 is closed under `docs/architecture/PHASE7_ADAPTIVE_ENGINE_CONTRACT.md`; preserve its deterministic rules, Phase 4B mastery and immutable evidence. Recommendation-quality evaluation belongs to Phase 9.
+Active objective: implement Phase 8 under `docs/architecture/PHASE8_UI_CONTRACT.md`. Build required learner-safe reads and non-authoritative sample Run, explicit idempotent demo provisioning, then Streamlit Home/Progress and Workspace with recovery, tutor and recommendation integration. No schema change is needed. Preserve Phase 7 deterministic rules, Phase 4B mastery and immutable evidence. Recommendation-quality evaluation belongs to Phase 9.
 
 Phase 4A supplies persistent evidence, Phase 4B v1 supplies binary single-skill BKT and assisted-activity reporting, Phase 6 supplies bounded tutor flows, and Phase 7 supplies deterministic adaptive decisions. Retry opt-in Gemini verification later; the external provider blocker did not block Phase 7 completion. Tutor quality/safety validation remains necessary before production use. Preserve the full product flow: Problem → Attempt → Reasoning / learner actions → Submission → Execution → Deterministic Evaluation → Learning Event / Session Vault → Learner-State Update → Adaptive Decision → Next Activity.
 
@@ -62,4 +62,4 @@ After v1 reporting, define mistake and retention signals from validated evidence
 
 ## Deferred Work
 
-Defer LeetCode ingestion, retention modelling/background scheduler, neural knowledge tracing, embeddings/RAG expansion, dashboard/UI, fine-tuning, local-model infrastructure, MCP, Kafka, Redis, and Kubernetes. Phase 7 includes dynamic scheduled review only. A separate unrestricted final-solution generator and advanced multi-turn agent are also deferred.
+Defer LeetCode ingestion, retention modelling/background scheduler, neural knowledge tracing, embeddings/RAG expansion, production UI, fine-tuning, local-model infrastructure, MCP, Kafka, Redis, and Kubernetes. Phase 7 includes dynamic scheduled review only. A separate unrestricted final-solution generator and advanced multi-turn agent are also deferred.
