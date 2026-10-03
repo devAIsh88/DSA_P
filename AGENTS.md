@@ -2,15 +2,15 @@
 
 ## Project Structure & Module Organization
 
-This repository contains the Python MVP for DEV Placement OS. Application code is in `app/`: HTTP routes live in `app/api/`, configuration in `app/config.py`, SQLAlchemy setup in `app/db/`, ORM entities in `app/models/`, and Pydantic contracts in `app/schemas/`. Alembic configuration and revision scripts are in `migrations/`. Keep tests in `tests/`, mirroring the component under test (for example, `tests/test_health.py`). The product and implementation PRDs are retained as `.docx` files in the repository root.
+This repository contains the Python MVP for DEV Placement OS. Application code is in `app/`: HTTP routes live in `app/api/`, configuration in `app/config.py`, SQLAlchemy setup in `app/db/`, ORM entities in `app/models/`, and Pydantic contracts in `app/schemas/`. Streamlit lives in `frontend/`; explicit local demo provisioning lives in `scripts/`. Alembic configuration and revision scripts are in `migrations/`. Keep tests in `tests/`, mirroring the component under test (for example, `tests/test_health.py`). The product and implementation PRDs are retained as `.docx` files in the repository root.
 
 ## Authority and Current Phase
 
 Use, in order: (1) Product PRD v0.3 (`DEV Placement OS.docx`) for long-term direction; (2) Python MVP Implementation PRD v0.1 for MVP scope and implementation order; (3) accepted architecture/research contracts in `docs/`; (4) implemented architecture; (5) agent-specific instructions. A research artifact can refine implementation details but cannot override an explicit PRD requirement without review. Report genuine PRD contradictions before implementation. Read `docs/PROJECT_STATUS.md` and `docs/plans/CURRENT_IMPLEMENTATION_PLAN.md` for the active scope.
 
-Implementation Phases 1 (foundation), 2 (problem system), 3 (execution/evaluation), 4A (Learning Evidence / Session Vault; implementation PRD Phase 4), Phase 4B v1 (learner model; implementation PRD Phase 5), and Phase 6 (AI Tutor) are implemented. Phase 4B v1 uses binary BKT only for independent, single-skill, unit-weight Attempts; assisted evidence informs reporting, not mastery, and multi-skill mastery remains deferred. Phase 6 follows the frozen `docs/architecture/PHASE6_AI_TUTOR_CONTRACT.md`; provider quality still needs opt-in live validation. Ignored research proposals are not implementation authority. Do not start adaptive recommendation or UI work because interfaces appear in a PRD.
+Implementation Phases 1 (foundation), 2 (problem system), 3 (execution/evaluation), 4A (Learning Evidence / Session Vault; implementation PRD Phase 4), Phase 4B v1 (learner model; implementation PRD Phase 5), and Phase 6 (AI Tutor) are implemented. Phase 4B v1 uses binary BKT only for independent, single-skill, unit-weight Attempts; assisted evidence informs reporting, not mastery, and multi-skill mastery remains deferred. Phase 6 follows the frozen `docs/architecture/PHASE6_AI_TUTOR_CONTRACT.md`; provider quality still needs opt-in live validation. Ignored research proposals are not implementation authority. Visible PRD interfaces alone do not authorize later-phase work.
 
-Phase 7 is implemented under `docs/architecture/PHASE7_ADAPTIVE_ENGINE_CONTRACT.md`, with migration `20261003_0006`. Recommendations are deterministic, versioned and persisted; they never modify SkillState/mastery or history. Abandonment is not demotion evidence; scheduled review does not prove forgetting. Thresholds are uncalibrated MVP defaults. Phase 8 implementation is authorized under `docs/architecture/PHASE8_UI_CONTRACT.md`: Streamlit uses public HTTP APIs only; sample Run is non-authoritative and creates no history. No Phase 9 implementation is authorized.
+Phase 7 is implemented under `docs/architecture/PHASE7_ADAPTIVE_ENGINE_CONTRACT.md`, with migration `20261003_0006`. Recommendations are deterministic, versioned and persisted; they never modify SkillState/mastery or history. Abandonment is not demotion evidence; scheduled review does not prove forgetting. Thresholds are uncalibrated MVP defaults. Phase 8 is complete under `docs/architecture/PHASE8_UI_CONTRACT.md`: Streamlit uses public HTTP APIs only; sample Run is non-authoritative and creates no history. Frontend imports may reuse public `app.schemas`, never models, database sessions, services or providers. Refresh restores committed backend state; unsaved drafts are transient. No Phase 9 implementation is authorized.
 
 ## Product and Evidence Boundaries
 
@@ -28,11 +28,13 @@ Use Python 3.12 and the local virtual environment:
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 uvicorn app.main:app --reload
+python -m scripts.provision_demo
+streamlit run frontend/app.py
 pytest
 alembic upgrade head
 ```
 
-`uvicorn` starts the FastAPI service; verify it at `GET /health`. `pytest` runs the automated checks. `alembic upgrade head` applies schema revisions using `DATABASE_URL` from `.env`. Use `alembic upgrade head --sql` for an offline migration preview.
+`uvicorn` starts FastAPI; verify it at `GET /health`. Provision demo data explicitly after migrations, then set `UI_LEARNER_ID` to the printed ID before starting Streamlit. Provisioning is local/dev only and creates no learner history. `pytest` includes offline Streamlit AppTest flows. `alembic upgrade head` applies schema revisions using `DATABASE_URL` from `.env`; use `alembic upgrade head --sql` for an offline preview.
 
 ## Coding Style & Naming Conventions
 

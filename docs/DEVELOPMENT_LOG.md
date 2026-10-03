@@ -342,6 +342,44 @@ This is a milestone-based engineering history. Append new entries in chronologic
 
 - Implement safe backend support, demo provisioning and the Streamlit learning loop under the frozen contract.
 
+## 2026-10-03 — Phase 8 Streamlit learning loop completion
+
+### Completed
+
+- Added public-sample `POST /runs`, ownership-scoped Submission recovery, learner/dashboard facades and safe skill labels. Run uses ExecutionProvider and writes no Submission, LearningEvent, mastery or recommendation state.
+- Added explicit `python -m scripts.provision_demo`: six curated Problems, two Skills and unit-weight mappings, with idempotency/conflict checks and local database guards. No learner history, projections or recommendations are fabricated.
+- Built Streamlit Home/Progress and Workspace with a typed HTTP client, explicit Attempt lifecycle, reasoning, distinct Run/Submit results, all six targeted tutor flows, truthful skill reporting and server-selected next activity. Kept frozen BKT, adaptive rules and historical events unchanged.
+- Implemented safe URL recovery, stable session operation keys, persisted Submission/source restoration and lost-response reconstruction. Saved understanding answers are not automatically resent when AI evaluation fails.
+
+### Issues Encountered
+
+- Real local provisioning found legacy manually assigned IDs ahead of PostgreSQL sequences. Added upward-only sequence synchronization under local catalogue locks and regression tests; existing rows are preserved. Sequence advances are nontransactional and can leave harmless rollback gaps.
+- Hardened malformed HTTP error translation so private server content remains excluded. No browser surface was available for visual verification; this remains a separate manual check, not a claimed pass.
+
+### Decisions
+
+- Frontend presentation remains outside database/services/providers; public schemas and HTTP are the only application boundary. Viewing a Problem does not start an Attempt and sample Run cannot authorize SOLVED.
+- Global Attempt totals are distinct from supported skill reporting; independent/hint shares have explicit supported-success denominators. Mastery is an estimate, review is scheduling, and AI feedback is interpretation.
+- Refresh recovers committed state, not unsaved drafts. Gemini failure preserves the core learning loop; successful live provider/model quality remains unverified. Phase 9 evaluation and production authentication remain deferred.
+
+### Verification
+
+- Baseline: 263 passed, 1 skipped. Final full offline suite: **353 passed, 1 opt-in Judge0 test skipped, 8 existing warnings**. Phase 8 suites: backend 26, provisioning 32, foundation 21, Streamlit AppTest 11. No live Gemini/Judge0 calls.
+- AppTest exercised the full independent learning loop, all six tutor flows, assisted reporting without mastery, provider failure/fallback, unknown POST results, full-session recovery, recommendation consumption and hidden-data exclusion.
+- Local PostgreSQL provisioning succeeded; rerun created zero rows. Original catalogue data was retained; persistent Attempt/Submission/LearningEvent/SkillState/Recommendation counts remained zero after provisioning.
+- Disposable localhost FastAPI and Streamlit returned successful health/read responses. An HTTP learning-loop smoke test using isolated SQLite and fake execution/tutor providers passed. No learner code was executed or persistent learner activity manufactured. Browser visual/keyboard verification remains recommended.
+- Alembic current/head remains `20261003_0006`; `alembic check` detected no new upgrade operations. No Phase 8 migration. Read-only reviewer verdict: **APPROVED** for the supplied contract, critical source and test scenarios; root/tester ran the tests independently.
+
+### Git
+
+- `e9063b6` — architecture freeze; `3c9a3a1` — safe backend reads/sample Run; `17b7dc9` — demo provisioning.
+- `b55659b` — Streamlit/API foundation; `5269387` — legacy sequence fix; `884a306` — integrated workspace/progress/tutor/recovery flows.
+- Verified milestones were pushed to `origin/main`. This closeout is recorded by `docs: close Phase 8 Streamlit implementation`; Git supplies its exact revision.
+
+### Next
+
+- Phase 9 readiness/evaluation architecture only. Manually inspect browser layout/keyboard use; retry externally blocked Gemini verification separately. Do not infer calibrated mastery, retention loss or validated recommendation quality from prototype completion.
+
 ## Document Roles
 
 - `docs/PROJECT_STATUS.md` records current truth.

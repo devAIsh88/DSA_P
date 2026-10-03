@@ -1,6 +1,6 @@
 # Current Implementation Plan
 
-This plan records completed implementation and the next development boundaries. Phase 7 is complete; Phase 6 live provider verification remains externally blocked. Product PRD v0.3 (`DEV Placement OS.docx`) governs long-term direction; Python MVP Implementation PRD v0.1 governs MVP scope and order. Phase 4A/4B split its learning-event and learner-model work without changing the sequence. The frozen Phase 6 and Phase 7 contracts are in `docs/architecture/`; `LEARNER_EVIDENCE_AND_STATE.md` remains the evidence/state boundary. Architecture acceptance does not itself begin implementation.
+This plan records completed implementation and the next development boundaries. Phase 8 is complete; Phase 6 live provider verification remains externally blocked. Product PRD v0.3 (`DEV Placement OS.docx`) governs long-term direction; Python MVP Implementation PRD v0.1 governs MVP scope and order. Phase 4A/4B split its learning-event and learner-model work without changing the sequence. Frozen implementation contracts are in `docs/architecture/`; `LEARNER_EVIDENCE_AND_STATE.md` remains the evidence/state boundary. Architecture acceptance does not itself begin implementation.
 
 ## Current State
 
@@ -11,10 +11,11 @@ This plan records completed implementation and the next development boundaries. 
 - Learner-model architecture research and implementation contract are in `docs/research/learner-model/`. User-accepted Phase 4A decisions govern reasoning in event evidence, immutable committed events, and the MVP PRD Attempt route names where that contract differs.
 - Phase 4B v1 binary single-skill BKT/reporting and Phase 6 tutor flows are complete as described below.
 - Phase 7 is complete: deterministic recommendation policy, persistence, revision scheduling, weak-skill targeting, API and Attempt integration; migration `20261003_0006`. Full verification: 263 passed, 1 opt-in Judge0 test skipped; no schema drift.
+- Phase 8 is complete: typed Streamlit UI, safe learner/dashboard/submission reads, isolated sample Run, explicit demo provisioning, recovery and the full learner loop. Full verification: 353 passed, 1 opt-in Judge0 test skipped; Alembic unchanged with no drift.
 
 ## Next Objective
 
-Active objective: implement Phase 8 under `docs/architecture/PHASE8_UI_CONTRACT.md`. Build required learner-safe reads and non-authoritative sample Run, explicit idempotent demo provisioning, then Streamlit Home/Progress and Workspace with recovery, tutor and recommendation integration. No schema change is needed. Preserve Phase 7 deterministic rules, Phase 4B mastery and immutable evidence. Recommendation-quality evaluation belongs to Phase 9.
+Next boundary: Phase 9 readiness/evaluation architecture only. Identify datasets, baselines and quality/safety questions before accepting evaluation implementation or paid provider runs. Preserve Phase 7 deterministic rules, Phase 4B mastery and immutable evidence. Manual browser visual/accessibility verification of Phase 8 remains recommended; no Phase 9 implementation is authorized.
 
 Phase 4A supplies persistent evidence, Phase 4B v1 supplies binary single-skill BKT and assisted-activity reporting, Phase 6 supplies bounded tutor flows, and Phase 7 supplies deterministic adaptive decisions. Retry opt-in Gemini verification later; the external provider blocker did not block Phase 7 completion. Tutor quality/safety validation remains necessary before production use. Preserve the full product flow: Problem → Attempt → Reasoning / learner actions → Submission → Execution → Deterministic Evaluation → Learning Event / Session Vault → Learner-State Update → Adaptive Decision → Next Activity.
 
@@ -58,7 +59,16 @@ After v1 reporting, define mistake and retention signals from validated evidence
 - `GET /recommendations/next` is allowlisted and returns `409` while an Attempt is active. `POST /attempts/start` consumes only a fresh exact match in the same transaction as its new Attempt/opening event; stale or different-problem decisions are superseded. Idempotent old-start retrieval cannot consume a newer decision.
 - Single-skill/unit-weight mappings permit targeting. Unsupported mappings may supply unattributed catalogue choices, without mastery inference. No LLM, execution-provider, learner-state or historical-event write occurs during recommendation selection.
 - Migration `20261003_0006` follows `20260929_0005`; upgrade, empty-table downgrade, re-upgrade and schema consistency checks passed. Tests cover policy, persistence, service, API and rollback; disposable PostgreSQL concurrency checks passed.
-- No demo seed expansion was required for correctness. The local catalogue has one Easy unmapped problem; isolated fixtures cover multiple skills and Easy/Medium/Hard. Curate demonstration data explicitly later without fabricated learner history. Retention/error targeting and recommendation-quality validation remain deferred.
+- No demo seed expansion was required for Phase 7 correctness. Phase 8 subsequently added explicit demo catalogue provisioning without learner history. Retention/error targeting and recommendation-quality validation remain deferred.
+
+## Phase 8 — Streamlit UI (complete)
+
+- Implemented `PHASE8_UI_CONTRACT.md`: Home/Progress and Workspace call public HTTP through a typed API client; no direct database/service/provider access. Viewing a Problem creates no Attempt. Start/resume, reasoning, Run/Submit, completion/abandonment and all six targeted tutor flows respect backend gates.
+- `POST /runs` uses only public sample cases through ExecutionProvider, creates no learning evidence and cannot authorize SOLVED. Submission read, learner facade and dashboard return allowlisted ownership-scoped data and public skill labels; reporting denominators remain explicit.
+- `python -m scripts.provision_demo` provisions a small local catalogue idempotently and refuses conflicts. It creates no Attempts, Submissions, events, learner state or recommendations. Legacy local ID sequences are advanced only when needed; rollback may leave harmless gaps.
+- Safe URL IDs plus backend reads restore committed Attempts, reasoning, tutor content and latest Submission/results. Session drafts/operation keys are transient; no automatic POST replay or resubmission of saved understanding answers. Gemini failure leaves the coding/progress/recommendation loop usable.
+- Verification: 26 backend tests, 32 provisioning tests, 21 foundation tests and 11 AppTest scenarios; full suite 353 passed, 1 skipped. Disposable localhost HTTP and server health checks passed; browser automation was unavailable, so visual/keyboard review remains recommended. No live Gemini/Judge0 calls or new migration.
+- Estimated mastery is not certainty. Unsupported retention/error/readiness metrics, multi-skill mastery, policy-quality claims, authentication, custom-input execution and production UI remain deferred.
 
 ## Deferred Work
 
