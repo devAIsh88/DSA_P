@@ -8,3 +8,4 @@ pgvector==0.4.2
 pytest==9.0.2
 httpx==0.28.1
 google-genai==2.25.0
+streamlit==1.64.0
