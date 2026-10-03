@@ -380,6 +380,26 @@ This is a milestone-based engineering history. Append new entries in chronologic
 
 - Phase 9 readiness/evaluation architecture only. Manually inspect browser layout/keyboard use; retry externally blocked Gemini verification separately. Do not infer calibrated mastery, retention loss or validated recommendation quality from prototype completion.
 
+## 2026-10-03 — Phase 9 evaluation architecture freeze
+
+### Decisions
+
+- Accepted a Git-versioned compact tutor suite and human rubric, provider-neutral invocation, three evaluation-only persistence tables, explicit resume and per-dimension comparison. Existing learner/evidence/tutor/adaptive semantics remain unchanged.
+- Automatic contract checks are distinct from subjective human quality and longitudinal learner outcomes. Missing accounting stays unknown; synthetic oracle fixtures cannot establish model quality or justify production selection.
+- Future live CLI calls require explicit candidates/suite, opt-in, timeout, maximum calls and cost acknowledgment. This autonomous run permits only offline/dry-run execution. No judge calls, production model selection or later-phase work.
+
+### Verification
+
+- Starting HEAD `358453c`, clean and synchronized after fetch; independent baseline **353 passed, 1 skipped**. Alembic `20261003_0006`. PRDs require same-case comparisons and stored results; current adapter lacks token counters and successful live verification remains blocked.
+
+### Git
+
+- Architecture checkpoint: `docs: freeze Phase 9 evaluation architecture`; Git records the exact revision.
+
+### Next
+
+- Implement and verify offline benchmark definitions, harness, persistence, review and comparison; keep real candidates and selection pending.
+
 ## Document Roles
 
 - `docs/PROJECT_STATUS.md` records current truth.

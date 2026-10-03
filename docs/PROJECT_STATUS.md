@@ -27,7 +27,7 @@ Live Gemini smoke verification reached the Gemini HTTP service with the configur
 
 ## Next
 
-- Phase 9 readiness and evaluation architecture only; no Phase 9 implementation is authorized. Define evaluation questions and datasets before benchmarking or changing accepted policies. Perform a manual browser visual/accessibility check of the Phase 8 prototype.
+- Phase 9 offline evaluation foundation is authorized under `docs/architecture/PHASE9_EVALUATION_CONTRACT.md`: versioned tutor cases, provider-neutral runner, evaluation-only persistence, human review and per-dimension comparison. Live/paid model calls and production selection are not authorized. Manual browser visual/accessibility review of Phase 8 remains recommended.
 
 - Retry opt-in live Gemini verification later, then validate tutor output quality, safety, latency, and structured-output reliability before production use. This external blocker did not block Phase 7 completion. Evaluate Phase 4B estimates before accepting new mastery or multi-skill attribution policies.
 

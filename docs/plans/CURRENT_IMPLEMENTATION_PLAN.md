@@ -15,7 +15,7 @@ This plan records completed implementation and the next development boundaries. 
 
 ## Next Objective
 
-Next boundary: Phase 9 readiness/evaluation architecture only. Identify datasets, baselines and quality/safety questions before accepting evaluation implementation or paid provider runs. Preserve Phase 7 deterministic rules, Phase 4B mastery and immutable evidence. Manual browser visual/accessibility verification of Phase 8 remains recommended; no Phase 9 implementation is authorized.
+Active objective: implement the Phase 9 offline evaluation foundation under `docs/architecture/PHASE9_EVALUATION_CONTRACT.md`: versioned cases/rubric, provider-neutral harness, evaluation-only persistence, review and comparison. No live/paid model calls or production selection are authorized. Preserve Phase 7 rules, Phase 4B mastery and immutable learner evidence. Empirical learner outcomes and real multi-model comparison remain pending; manual Phase 8 browser verification remains recommended.
 
 Phase 4A supplies persistent evidence, Phase 4B v1 supplies binary single-skill BKT and assisted-activity reporting, Phase 6 supplies bounded tutor flows, and Phase 7 supplies deterministic adaptive decisions. Retry opt-in Gemini verification later; the external provider blocker did not block Phase 7 completion. Tutor quality/safety validation remains necessary before production use. Preserve the full product flow: Problem → Attempt → Reasoning / learner actions → Submission → Execution → Deterministic Evaluation → Learning Event / Session Vault → Learner-State Update → Adaptive Decision → Next Activity.
 
