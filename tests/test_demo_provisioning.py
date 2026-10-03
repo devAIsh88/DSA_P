@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 from sqlalchemy import create_engine, event, func, select
+from sqlalchemy.dialects.postgresql import dialect as postgresql_dialect
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -15,7 +16,9 @@ from app.db.base import Base
 from app.models import Attempt, LearningEvent, Problem, ProblemSkill, Recommendation, Skill, SkillState, Submission, User
 from app.models.test_case import TestCase as ProblemTestCase
 from scripts.demo_catalogue import DEMO_PROBLEMS, DEMO_SOURCE
-from scripts.provision_demo import DemoProvisioningError, main, provision_demo, validate_local_demo_database
+from scripts.provision_demo import (
+    DemoProvisioningError, main, provision_demo, synchronize_demo_sequences, validate_local_demo_database,
+)
 
 
 @pytest.fixture
@@ -226,3 +229,115 @@ def test_demo_database_guard_refuses_overrides_implicit_hosts_and_invalid_urls(d
 
 def test_demo_database_guard_allows_sqlite_only_in_test_environment() -> None:
     validate_local_demo_database("test", "sqlite://")
+
+
+class SequenceResult:
+    """Only the SQLAlchemy result methods used by the synchronization helper."""
+
+    def __init__(self, value=None):
+        self.value = value
+
+    def mappings(self):
+        return self
+
+    def one_or_none(self):
+        return self.value
+
+    def one(self):
+        return self.value
+
+
+class PostgreSQLSequenceSession:
+    """Record compiled statements; neither connect nor execute any SQL."""
+
+    def __init__(self, *, maximum_id, last_value, is_called, schema="public", sequence="users_id_seq"):
+        self.bind = SimpleNamespace(dialect=postgresql_dialect())
+        self.state = (maximum_id, last_value, is_called)
+        self.schema = schema
+        self.sequence = sequence
+        self.current_table = None
+        self.calls = []
+
+    def get_bind(self):
+        return self.bind
+
+    def execute(self, statement, parameters=None):
+        sql = str(statement.compile(dialect=self.bind.dialect))
+        self.calls.append((sql, parameters))
+        if "pg_get_serial_sequence" in sql:
+            self.current_table = parameters["table_name"]
+            if self.current_table != "users":
+                return SequenceResult(None)
+            return SequenceResult({"schema_name": self.schema, "sequence_name": self.sequence, "sequence_oid": 100})
+        if "last_value" in sql and "is_called" in sql:
+            return SequenceResult(self.state[1:])
+        return SequenceResult()
+
+    def scalar(self, statement):
+        sql = str(statement.compile(dialect=self.bind.dialect))
+        self.calls.append((sql, None))
+        assert self.current_table == "users"
+        assert "max(users.id)" in sql
+        return self.state[0]
+
+
+@pytest.mark.parametrize("maximum,last,called,should_advance", [
+    (7, 1, True, True),
+    (7, 7, False, True),
+    (7, 12, True, False),
+    (7, 7, True, False),
+    (None, 1, False, False),
+])
+def test_demo_sequence_alignment_advances_only_when_collision_is_possible(maximum, last, called, should_advance) -> None:
+    session = PostgreSQLSequenceSession(maximum_id=maximum, last_value=last, is_called=called)
+    synchronize_demo_sequences(session)
+    advances = [(sql, params) for sql, params in session.calls if "setval" in sql]
+    if should_advance:
+        assert len(advances) == 1
+        assert advances[0][1] == {"sequence_oid": 100, "maximum_id": maximum}
+        assert "true" in advances[0][0]
+    else:
+        assert advances == []
+
+
+def test_demo_sequence_alignment_locks_only_catalogue_tables_and_binds_lookup_values() -> None:
+    session = PostgreSQLSequenceSession(maximum_id=7, last_value=1, is_called=True)
+    synchronize_demo_sequences(session)
+    lock = session.calls[0]
+    assert lock == ("LOCK TABLE users, skills, problems, test_cases IN SHARE ROW EXCLUSIVE MODE", None)
+    lookups = [(sql, params) for sql, params in session.calls if "pg_get_serial_sequence" in sql]
+    assert [params for _sql, params in lookups] == [
+        {"table_name": table, "column_name": "id"} for table in ("users", "skills", "problems", "test_cases")
+    ]
+    assert all("%(table_name)s" in sql and "%(column_name)s" in sql for sql, _params in lookups)
+    assert not any(history in lock[0] for history in ("attempts", "submissions", "learning_events", "skill_states", "recommendations"))
+
+
+def test_demo_sequence_identifiers_are_quoted_and_setval_uses_bound_oid() -> None:
+    schema = 'odd"schema'
+    sequence = 'sequence"; DROP TABLE users; --'
+    session = PostgreSQLSequenceSession(maximum_id=9, last_value=1, is_called=False,
+                                        schema=schema, sequence=sequence)
+    synchronize_demo_sequences(session)
+    reads = [sql for sql, _params in session.calls if "last_value" in sql]
+    assert len(reads) == 1
+    quoted = session.bind.dialect.identifier_preparer.quote_identifier
+    assert f"{quoted(schema)}.{quoted(sequence)}" in reads[0]
+    advances = [(sql, params) for sql, params in session.calls if "setval" in sql]
+    assert advances[0][1] == {"sequence_oid": 100, "maximum_id": 9}
+    assert schema not in advances[0][0]
+    assert sequence not in advances[0][0]
+
+
+def test_demo_sequence_alignment_is_a_sqlite_noop() -> None:
+    class SQLiteSession:
+        def get_bind(self):
+            return SimpleNamespace(dialect=SimpleNamespace(name="sqlite"))
+
+        def execute(self, *_args, **_kwargs):
+            raise AssertionError("SQLite must not execute PostgreSQL synchronization SQL")
+
+        def scalar(self, *_args, **_kwargs):
+            raise AssertionError("SQLite must not query sequence state")
+
+    synchronize_demo_sequences(SQLiteSession())

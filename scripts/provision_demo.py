@@ -3,9 +3,9 @@
 from collections import Counter
 from dataclasses import dataclass
 
-from sqlalchemy import select
+from sqlalchemy import BigInteger, Boolean, Column, MetaData, Table, func, select, text
 from sqlalchemy.engine import make_url
-from sqlalchemy.exc import ArgumentError
+from sqlalchemy.exc import ArgumentError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.models.problem import Problem
@@ -30,6 +30,41 @@ class DemoProvisioningSummary:
     problems_created: int
     test_cases_created: int
     mappings_created: int
+
+
+def synchronize_demo_sequences(db: Session) -> None:
+    """Advance local catalogue ID sequences past legacy manually assigned IDs."""
+
+    if db.get_bind().dialect.name != "postgresql":
+        return
+    models = (User, Skill, Problem, TestCase)
+    preparer = db.get_bind().dialect.identifier_preparer
+    table_names = ", ".join(preparer.format_table(model.__table__) for model in models)
+    # Prevent catalogue/User inserts between MAX(id) and sequence synchronization.
+    db.execute(text(f"LOCK TABLE {table_names} IN SHARE ROW EXCLUSIVE MODE"))
+    for model in models:
+        sequence = db.execute(text(
+            "SELECT ns.nspname AS schema_name, seq.relname AS sequence_name, seq.oid AS sequence_oid "
+            "FROM pg_class AS seq JOIN pg_namespace AS ns ON ns.oid = seq.relnamespace "
+            "WHERE seq.oid = CAST(pg_get_serial_sequence(:table_name, :column_name) AS regclass)"
+        ), {"table_name": model.__table__.fullname, "column_name": "id"}).mappings().one_or_none()
+        if sequence is None:
+            continue
+        sequence_table = Table(
+            sequence["sequence_name"], MetaData(), Column("last_value", BigInteger),
+            Column("is_called", Boolean), schema=sequence["schema_name"],
+            quote=True, quote_schema=True,
+        )
+        last_value, is_called = db.execute(select(
+            sequence_table.c.last_value, sequence_table.c.is_called,
+        )).one()
+        maximum_id = db.scalar(select(func.max(model.id)))
+        if maximum_id is not None and (
+                maximum_id > last_value or (maximum_id == last_value and not is_called)):
+            # PostgreSQL sequence advances survive rollback; harmless gaps are preferable
+            # to collisions. Never decrease a sequence or change an existing row.
+            db.execute(text("SELECT setval(CAST(:sequence_oid AS regclass), :maximum_id, true)"),
+                       {"sequence_oid": sequence["sequence_oid"], "maximum_id": maximum_id})
 
 
 def _problem_fields(spec: DemoProblem) -> dict[str, str]:
@@ -60,6 +95,7 @@ def provision_demo(db: Session) -> DemoProvisioningSummary:
     """Provision a small catalogue atomically; refuse conflicts instead of overwriting."""
 
     try:
+        synchronize_demo_sequences(db)
         users = list(db.scalars(select(User).order_by(User.id)))
         if len(users) > 1:
             raise DemoProvisioningError("Demo provisioning requires at most one existing learner")
@@ -138,6 +174,9 @@ def main() -> int:
             summary = provision_demo(db)
         except DemoProvisioningError as error:
             print(f"Demo provisioning refused: {error}")
+            return 1
+        except SQLAlchemyError:
+            print("Demo provisioning failed safely. Check the local database and migration head; no private connection details are displayed.")
             return 1
     print(f"Demo catalogue ready. Set UI_LEARNER_ID={summary.user_id} in the local environment.")
     print(f"Created users={summary.users_created}, skills={summary.skills_created}, "
