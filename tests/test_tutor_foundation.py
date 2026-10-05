@@ -12,7 +12,7 @@ from app.services.tutor_provider_factory import build_tutor_provider
 
 
 def test_tutor_configuration_and_contract_bounds() -> None:
-    settings = Settings(_env_file=None, GOOGLE_API_KEY="", TUTOR_PROVIDER="gemini")
+    settings = Settings(_env_file=None, ZERO_COST_MODE=False, GOOGLE_API_KEY="", TUTOR_PROVIDER="gemini")
     assert settings.tutor_model == "gemini-3.8-flash"
     assert settings.hint_level_6_requires_level_5 is True
     assert isinstance(build_tutor_provider(Settings(_env_file=None, TUTOR_PROVIDER="mock")), MockTutorProvider)

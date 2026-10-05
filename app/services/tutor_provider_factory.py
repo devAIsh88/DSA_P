@@ -7,6 +7,13 @@ from app.services.tutor_provider import MockTutorProvider, TutorProvider, TutorP
 def build_tutor_provider(settings: Settings) -> TutorProvider:
     """Select a replaceable adapter without exposing vendor types to callers."""
 
+    settings.validate_tutor_safety()
+    if settings.tutor_provider in {"zero_cost", "groq"}:
+        from app.services.zero_cost_tutor_provider import ZeroCostFallbackTutorProvider
+        return ZeroCostFallbackTutorProvider(settings)
+    if settings.tutor_provider == "ollama":
+        from app.services.ollama_tutor_provider import OllamaTutorProvider
+        return OllamaTutorProvider(settings)
     if settings.tutor_provider == "mock":
         return MockTutorProvider()
     if settings.tutor_provider == "gemini":

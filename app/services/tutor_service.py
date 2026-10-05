@@ -47,7 +47,7 @@ async def _invoke(call: Callable[[], Awaitable[object]], retries: int, schema: t
         try:
             return schema.model_validate(await call())
         except (TutorProviderError, ValueError, TypeError) as error:
-            if attempt == retries:
+            if attempt == retries or (isinstance(error, TutorProviderError) and not error.retryable):
                 raise TutorProviderError("Tutor provider unavailable") from error
     raise AssertionError("Retry loop must return or raise")
 

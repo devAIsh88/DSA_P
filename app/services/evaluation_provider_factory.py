@@ -41,16 +41,20 @@ def build_provider(candidate: EvaluationCandidate, case: BenchmarkCase, policy: 
     from pydantic import Field, SecretStr
     from pydantic_settings import BaseSettings, SettingsConfigDict
     from app.config import Settings
-    from app.services.gemini_tutor_provider import GeminiTutorProvider
 
     class Credentials(BaseSettings):
-        model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+        model_config = SettingsConfigDict(env_file=".env", extra="ignore", hide_input_in_errors=True)
+        zero_cost_mode: bool = Field(default=True, validation_alias="ZERO_COST_MODE")
         api_key: SecretStr = Field(default=SecretStr(""), validation_alias="GOOGLE_API_KEY")
 
-    credential = Credentials().api_key.get_secret_value()
+    credentials = Credentials()
+    if credentials.zero_cost_mode:
+        raise ValueError("ZERO_COST_MODE prohibits Gemini benchmark calls")
+    from app.services.gemini_tutor_provider import GeminiTutorProvider
+    credential = credentials.api_key.get_secret_value()
     if not credential:
         raise ValueError("The explicitly selected provider credential is unavailable")
-    settings = Settings(_env_file=None, GOOGLE_API_KEY=credential, TUTOR_PROVIDER="gemini",
+    settings = Settings(_env_file=None, ZERO_COST_MODE=False, GOOGLE_API_KEY=credential, TUTOR_PROVIDER="gemini",
                         TUTOR_MODEL=candidate.model_id, TUTOR_TIMEOUT_SECONDS=policy.timeout_seconds,
                         TUTOR_MAX_RETRIES=0, TUTOR_MAX_INPUT_CHARS=policy.max_input_chars,
                         TUTOR_MAX_OUTPUT_TOKENS=policy.max_output_tokens)

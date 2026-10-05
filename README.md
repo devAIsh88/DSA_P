@@ -12,7 +12,7 @@ DEV Placement OS is an evidence-first DSA learning prototype for one learner. Ph
 Streamlit → public FastAPI HTTP contracts → application services
                                             ├─ PostgreSQL
                                             ├─ isolated ExecutionProvider (Judge0)
-                                            └─ replaceable TutorProvider (Gemini)
+                                            └─ replaceable TutorProvider (free Groq → local Ollama)
 
 Problem → Attempt → reasoning/actions → Submission → execution/evaluation
         → LearningEvent → SkillState → Recommendation → next activity
@@ -100,6 +100,64 @@ Home/Progress presents catalogue browsing, active-Attempt recovery, activity/ski
 The UI labels **estimated mastery**, not certainty. Hint requests, delivered levels and supported-skill solve shares retain their exact reporting denominators; global activity counts remain separate. Unsupported placement-readiness, retention-loss and calibrated-confidence metrics are not shown.
 
 ### Tutor flows and degradation
+
+#### Zero-cost provider setup
+
+Install [Ollama](https://ollama.com/download) explicitly. Quit any existing
+Ollama daemon, then in a separate PowerShell terminal:
+
+```powershell
+$env:OLLAMA_NO_CLOUD='1'
+ollama serve
+```
+
+With that local daemon running, use another terminal to install the model:
+
+```powershell
+ollama pull qwen2.5-coder:3b
+```
+
+The pull is a manual local-model download; the application never downloads
+models. If the desktop app manages the daemon, set `OLLAMA_NO_CLOUD=1` in its
+environment and restart it instead of starting a second daemon.
+
+Update your existing untracked `.env` locally (preserve database settings):
+
+```dotenv
+ZERO_COST_MODE=true
+TUTOR_PROVIDER=zero_cost
+GROQ_API_KEY=
+GROQ_MODEL=
+GROQ_FREE_TIER_CONFIRMED=false
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=qwen2.5-coder:3b
+GROQ_TIMEOUT_SECONDS=8
+OLLAMA_TIMEOUT_SECONDS=60
+```
+
+For optional Groq use, add the key **only locally**, select a currently free
+text model, and set confirmation true only after verifying that the account
+and model need no billing, card, credits or paid tier. Never enable billing to
+resolve a limit. No key/model/confirmation means local-only operation.
+Free-tier limits are account-specific; a key alone is not proof of free use.
+See [Groq billing](https://console.groq.com/docs/billing-faqs) and
+[limits](https://console.groq.com/docs/rate-limits).
+
+Start FastAPI and Streamlit using the commands above. Groq success returns its
+validated response; rate limits, timeout, connection/provider errors or invalid
+output switch to local Ollama. There is one Groq call per operation, not a
+rate-limit retry loop. Both failures retain existing safe unavailable/static
+hint behavior; Run, Submit, lifecycle, progress and recommendations continue.
+
+Zero-cost mode defaults on and refuses known paid/unknown provider selection,
+including the legacy Gemini adapter and live Gemini benchmark path. An older
+`.env` selecting Gemini must be changed before startup. Do not disable this
+guard for the zero-spend deployment. The software prevents configured paid
+fallbacks; external account/pricing policies cannot be guaranteed by software.
+Ollama must use trusted local GGUF weights and a cloud-disabled daemon:
+[official local-only setup](https://docs.ollama.com/faq).
+No live provider quality or model selection is claimed. Details:
+[zero-cost contract](docs/architecture/ZERO_COST_TUTOR_CONTRACT.md).
 
 Six targeted interactions cover hint requests, diagnosis, reasoning analysis, post-attempt explanation, understanding questions and answer evaluation. There is no generic chatbot. Tutor feedback never determines code correctness or mutates mastery.
 

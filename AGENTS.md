@@ -14,6 +14,8 @@ Phase 7 is implemented under `docs/architecture/PHASE7_ADAPTIVE_ENGINE_CONTRACT.
 
 Phase 9 offline evaluation foundation is implemented under `docs/architecture/PHASE9_EVALUATION_CONTRACT.md`, with evaluation-only migration `20261003_0007`; real comparison/selection remains pending. Benchmark results/reviews stay separate from learner history/state. Synthetic results are harness fixtures, never real-model claims. Missing tokens/cost remain unavailable; subjective quality requires a versioned human rubric. No live/paid model calls, production selection or later-phase implementation is authorized.
 
+Zero-cost tutor deployment follows `docs/architecture/ZERO_COST_TUTOR_CONTRACT.md`: default `ZERO_COST_MODE=true` refuses paid/unknown providers. Only explicitly confirmed-free Groq may precede local Ollama; no billing activation, paid fallback, cloud model, automatic model pull or live benchmark call. Credentials stay local. Missing free-tier confirmation uses local inference. Provider/account pricing remains an operator responsibility; never infer free eligibility from an API key.
+
 ## Product and Evidence Boundaries
 
 The product is **Learner Model + Evidence + Execution + Evaluation + Adaptive Decision Making + AI**, not a generic LLM chat UI. Preserve this flow: Problem → Attempt → Reasoning / learner actions → Submission → Execution → Deterministic Evaluation → Learning Event / Session Vault → Learner-State Update → Adaptive Decision → Next Activity.

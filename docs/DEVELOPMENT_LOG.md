@@ -439,6 +439,32 @@ This is a milestone-based engineering history. Append new entries in chronologic
 
 - Accept candidate providers/models and an API/cost budget before real comparable runs; complete human rubric review before considering production selection. Existing live Gemini availability remains unresolved. No later-phase implementation.
 
+## 2026-10-06 ? Zero-cost tutor provider integration
+
+### Completed
+
+- Added Groq and local Ollama adapters for all five TutorProvider tasks, plus a concrete Groq ? Ollama chain. Extracted the unchanged Phase 6 prompt/payload mapping into a shared provider-neutral module; public routes and evidence/state policies remain intact.
+- Added fail-closed zero-cost defaults, explicit free-tier confirmation, local model checks, bounded HTTP/total deadlines, safe logging and non-repeated quota fallback. Updated configuration examples and manual Ollama setup instructions.
+
+### Decisions
+
+- An API key does not establish a free account/model. Unconfirmed or unconfigured Groq is skipped; no billing activation or paid fallback exists. External pricing/account policy cannot be attested by the application.
+- Require a trusted loopback Ollama daemon, resident GGUF model metadata and disabled cloud features. Models are installed manually, never pulled at startup. Both-provider failure preserves existing static hint fallback/unavailable behavior and saved learner answers.
+- Keep the historical Gemini adapter, but reject it and its live benchmark path in default zero-cost mode. Existing local Gemini configuration needs explicit replacement; the untracked `.env` was not modified.
+
+### Verification
+
+- Baseline: **462 passed, 1 skipped**. Added **47 fake-HTTP/endpoint tests**; full suite **509 passed, 1 opt-in Judge0 test skipped, 8 existing warnings**. All five tasks, fallback/failure, non-repeated 429, total deadlines, schema/secret rejection, local-only checks, redaction, idempotency and unchanged mastery were verified offline.
+- Alembic remains `20261003_0007 (head)`; `alembic check` found no upgrade operations. No migration or dependency change. No live Groq/Ollama/Gemini/Judge0 inference, model download or benchmark run was performed.
+
+### Git
+
+- Checkpoint on `main`: `feat(tutor): add zero-cost Groq and Ollama provider fallback`; exact source identity remains in Git history.
+
+### Next
+
+- Configure local Ollama and its manually pulled model; keep Groq disabled until current free-tier eligibility is confirmed. Any live Groq test requires explicit authorization. Provider quality, local CPU latency and future evaluation candidate registration remain unverified/separately scoped.
+
 ## Document Roles
 
 - `docs/PROJECT_STATUS.md` records current truth.

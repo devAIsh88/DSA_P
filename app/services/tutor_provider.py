@@ -16,6 +16,10 @@ from app.services.tutor_prompts import PROMPT_VERSIONS
 class TutorProviderError(Exception):
     """A provider could not return a validated tutor result."""
 
+    def __init__(self, message: str, *, retryable: bool = True) -> None:
+        super().__init__(message)
+        self.retryable = retryable
+
 
 class TutorProvider(ABC):
     """Vendor-independent interface; implementations do not access persistence."""

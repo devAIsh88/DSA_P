@@ -20,6 +20,8 @@
 
 ## Current
 
+**Zero-cost tutor integration:** Groq (explicitly confirmed free account/model only) ? local Ollama, with zero-cost mode on by default. All five tutor tasks retain Phase 6 contracts. Missing confirmation/key/model skips Groq. No paid fallback, automatic model pull, new dependency or migration; live provider quality remains unverified. See `docs/architecture/ZERO_COST_TUTOR_CONTRACT.md`. Existing local Gemini configuration must be updated before startup. Offline verification on 2026-10-06: **509 passed, 1 skipped**; Alembic remains `20261003_0007` with no drift. No live inference or downloads were performed.
+
 **Phase 9 offline foundation complete.** `docs/architecture/PHASE9_EVALUATION_CONTRACT.md` is implemented. Verification on 2026-10-05: **462 passed, 1 opt-in Judge0 test skipped**, with zero live model/Judge0 calls. Alembic is `20261003_0007 (head)` with no schema drift; disposable PostgreSQL upgrade/downgrade/re-upgrade passed. Two synthetic candidates completed 25 cases each in local PostgreSQL; comparison/export passed and learner row counts were unchanged. Synthetic results do not establish tutor quality. Human review and production selection remain pending; missing usage/cost is unavailable. Evaluation never writes learner events/state/recommendations.
 
 Phase 8 remains complete: Streamlit uses public HTTP, sample Run creates no history, and refresh restores committed backend state. Browser visual verification was unavailable and remains recommended.
@@ -30,11 +32,11 @@ Live Gemini smoke verification reached the Gemini HTTP service with the configur
 
 ## Next
 
-- Agree explicit candidate providers/models and an API/cost budget before any live Phase 9 comparison. All candidates must use the same suite/controls; complete human review before considering selection. Only Gemini is currently registered for future live evaluation; another provider requires a conforming adapter. No live/paid calls, production selection or later-phase implementation are authorized in this completed run.
+- Agree explicit candidate providers/models and an API/cost budget before any live Phase 9 comparison. All candidates must use the same suite/controls; complete human review before considering selection. The evaluation registry currently retains Gemini only, blocked in zero-cost mode; Groq/Ollama tutor adapters do not yet register benchmark candidates. Any future Groq evaluation must be explicitly authorized and confirmed free; no paid budget is permitted by the zero-cost deployment. No live/paid calls, production selection or later-phase implementation are authorized in this completed run.
 
 - Measure learner outcomes separately: hint dependency, retention, learner-state quality and recommendation quality are not established by tutor-output benchmarks. Manual Phase 8 browser visual/accessibility review remains recommended.
 
-- Retry opt-in live Gemini verification later, then validate tutor output quality, safety, latency, and structured-output reliability before production use. This external blocker did not block Phase 7 completion. Evaluate Phase 4B estimates before accepting new mastery or multi-skill attribution policies.
+- Validate the zero-cost tutor path using local Ollama, and only separately authorized, confirmed-free Groq smoke tests. Historical Gemini live verification remains blocked and Gemini is prohibited while zero-cost mode is enabled. This external blocker did not block Phase 7 completion. Evaluate Phase 4B estimates before accepting new mastery or multi-skill attribution policies.
 
 ## Later
 

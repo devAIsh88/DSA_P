@@ -34,7 +34,8 @@ class FakeClient:
 
 
 def settings(**values) -> Settings:
-    return Settings(_env_file=None, GOOGLE_API_KEY="test-only-key", TUTOR_MODEL="configured-model", **values)
+    return Settings(_env_file=None, ZERO_COST_MODE=False, TUTOR_PROVIDER="gemini",
+                    GOOGLE_API_KEY="test-only-key", TUTOR_MODEL="configured-model", **values)
 
 
 def context() -> TutorContext:
@@ -89,7 +90,10 @@ def test_malformed_output_missing_key_and_input_limit_fail_safely() -> None:
     with pytest.raises(TutorProviderError, match="valid tutor result"):
         asyncio.run(provider.generate_hint(HintTask(context=context(), level=1)))
     assert fake.closed
-    no_key = GeminiTutorProvider(Settings(_env_file=None, GOOGLE_API_KEY=""), client_factory=lambda **kwargs: fake)
+    no_key = GeminiTutorProvider(
+        Settings(_env_file=None, ZERO_COST_MODE=False, TUTOR_PROVIDER="gemini", GOOGLE_API_KEY=""),
+        client_factory=lambda **kwargs: fake,
+    )
     with pytest.raises(TutorProviderError, match="not configured"):
         asyncio.run(no_key.generate_hint(HintTask(context=context(), level=1)))
     tiny = GeminiTutorProvider(settings(TUTOR_MAX_INPUT_CHARS=1000), client_factory=lambda **kwargs: fake)
