@@ -77,6 +77,14 @@ def test_dry_run_requires_neither_database_nor_provider(monkeypatch, capsys):
     assert all(candidate["synthetic"] for candidate in plan["candidates"])
 
 
+def test_cost_notice_is_explicit_and_does_not_require_a_live_invocation(capsys):
+    cli._warn_live_cost(50)
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "50 external invocations" in captured.err
+    assert "total cost is unknown" in captured.err
+
+
 @pytest.mark.parametrize("options", [
     ["--timeout-seconds", "0"], ["--timeout-seconds", "nan"], ["--max-calls", "49"],
     ["--max-retries", "4"], ["--suite-version", "incorrect"], ["--case", "missing"],

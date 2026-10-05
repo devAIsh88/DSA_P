@@ -10,6 +10,7 @@
 - Phase 6 — Complete for development: all six AI Tutor endpoints implemented with immutable learner/tutor evidence, replaceable provider, deterministic hint gate, and minimal understanding check. Live provider verification is externally blocked.
 - Phase 7 — Deterministic Adaptive Engine: five recommendation actions, scheduled review, evidenced weak-skill targeting, immutable persisted decisions, and atomic Attempt-start consumption. Migration `20261003_0006`.
 - Phase 8 — Streamlit Home/Progress and Problem Workspace, safe recovery reads, non-authoritative public-sample Run, explicit demo provisioning, all six targeted tutor flows and backend-owned recommendations. No migration.
+- Phase 9 offline evaluation foundation — 25 versioned tutor cases, strict provider-neutral invocation, evaluation-only persistence, human rubric/review, comparison/export and a bounded offline-first CLI. Real-model comparison and production selection remain pending.
 
 ## Research Completed
 
@@ -19,7 +20,9 @@
 
 ## Current
 
-**Phase 8 complete.** `docs/architecture/PHASE8_UI_CONTRACT.md` is implemented. Streamlit uses typed public HTTP contracts; backend state remains authoritative. Sample Run creates no persisted Submission, LearningEvent, mastery or recommendation change. Refresh recovers committed Attempts, reasoning and the latest safe Submission; unknown POST responses are reconstructed before retry. Persisted understanding answers are not automatically resubmitted after AI failure. Verification on 2026-10-03: **353 passed, 1 opt-in Judge0 test skipped**, including 11 Streamlit AppTest scenarios; Alembic remains `20261003_0006 (head)` with no schema drift. Disposable localhost HTTP/Streamlit health smoke checks passed; browser visual verification was unavailable and remains recommended.
+**Phase 9 offline foundation complete.** `docs/architecture/PHASE9_EVALUATION_CONTRACT.md` is implemented. Verification on 2026-10-05: **462 passed, 1 opt-in Judge0 test skipped**, with zero live model/Judge0 calls. Alembic is `20261003_0007 (head)` with no schema drift; disposable PostgreSQL upgrade/downgrade/re-upgrade passed. Two synthetic candidates completed 25 cases each in local PostgreSQL; comparison/export passed and learner row counts were unchanged. Synthetic results do not establish tutor quality. Human review and production selection remain pending; missing usage/cost is unavailable. Evaluation never writes learner events/state/recommendations.
+
+Phase 8 remains complete: Streamlit uses public HTTP, sample Run creates no history, and refresh restores committed backend state. Browser visual verification was unavailable and remains recommended.
 
 Thresholds remain uncalibrated MVP defaults. Scheduled review does not establish forgetting; abandonment is not struggle evidence; low prior mastery alone is not confirmed weakness. Skill targeting requires a single unit-weight mapping. Retention modelling, recent-error targeting, multi-skill mastery and recommendation-quality evaluation remain deferred. Explicit local demo provisioning added six mapped Problems across two Skills; the original unmapped Problem was preserved. Provisioning created no learner history or projections and a rerun created no rows. The prototype is local, single-learner and unauthenticated; unsaved drafts may be lost on full refresh.
 
@@ -27,7 +30,9 @@ Live Gemini smoke verification reached the Gemini HTTP service with the configur
 
 ## Next
 
-- Phase 9 offline evaluation foundation is authorized under `docs/architecture/PHASE9_EVALUATION_CONTRACT.md`: versioned tutor cases, provider-neutral runner, evaluation-only persistence, human review and per-dimension comparison. Live/paid model calls and production selection are not authorized. Manual browser visual/accessibility review of Phase 8 remains recommended.
+- Agree explicit candidate providers/models and an API/cost budget before any live Phase 9 comparison. All candidates must use the same suite/controls; complete human review before considering selection. Only Gemini is currently registered for future live evaluation; another provider requires a conforming adapter. No live/paid calls, production selection or later-phase implementation are authorized in this completed run.
+
+- Measure learner outcomes separately: hint dependency, retention, learner-state quality and recommendation quality are not established by tutor-output benchmarks. Manual Phase 8 browser visual/accessibility review remains recommended.
 
 - Retry opt-in live Gemini verification later, then validate tutor output quality, safety, latency, and structured-output reliability before production use. This external blocker did not block Phase 7 completion. Evaluate Phase 4B estimates before accepting new mastery or multi-skill attribution policies.
 

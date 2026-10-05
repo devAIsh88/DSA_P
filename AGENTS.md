@@ -12,7 +12,7 @@ Implementation Phases 1 (foundation), 2 (problem system), 3 (execution/evaluatio
 
 Phase 7 is implemented under `docs/architecture/PHASE7_ADAPTIVE_ENGINE_CONTRACT.md`, with migration `20261003_0006`. Recommendations are deterministic, versioned and persisted; they never modify SkillState/mastery or history. Abandonment is not demotion evidence; scheduled review does not prove forgetting. Thresholds are uncalibrated MVP defaults. Phase 8 is complete under `docs/architecture/PHASE8_UI_CONTRACT.md`: Streamlit uses public HTTP APIs only; sample Run is non-authoritative and creates no history. Frontend imports may reuse public `app.schemas`, never models, database sessions, services or providers. Refresh restores committed backend state; unsaved drafts are transient.
 
-Phase 9 offline evaluation is authorized under `docs/architecture/PHASE9_EVALUATION_CONTRACT.md`. Benchmark results/reviews stay separate from learner history/state. Synthetic results are harness fixtures, never real-model claims. Missing tokens/cost remain unavailable; subjective quality requires a versioned human rubric. No live/paid model calls, production selection or later-phase implementation is authorized.
+Phase 9 offline evaluation foundation is implemented under `docs/architecture/PHASE9_EVALUATION_CONTRACT.md`, with evaluation-only migration `20261003_0007`; real comparison/selection remains pending. Benchmark results/reviews stay separate from learner history/state. Synthetic results are harness fixtures, never real-model claims. Missing tokens/cost remain unavailable; subjective quality requires a versioned human rubric. No live/paid model calls, production selection or later-phase implementation is authorized.
 
 ## Product and Evidence Boundaries
 

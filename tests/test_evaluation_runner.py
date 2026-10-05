@@ -171,9 +171,10 @@ def test_individual_last_attempt_accounting_is_not_mistaken_for_retry_total(load
     assert observation.input_tokens is None and observation.output_tokens is None
 
 
-def test_claimed_aggregate_accounting_must_cover_actual_attempt_count(loaded, candidate):
+@pytest.mark.parametrize("scope", ["all_attempts", "invocation"])
+def test_accounting_scope_must_cover_the_claimed_attempt_count(loaded, candidate, scope):
     accounting = InvocationAccounting(input_tokens=30, output_tokens=5, accounting_version="usage-v1", accounting_basis="tokens-v1",
-                                     scope="all_attempts", attempt_count=3)
+                                     scope=scope, attempt_count=3)
     observation = invoke(ScriptedProvider(accounting=[accounting]), loaded.suite.cases[0], candidate)
     assert observation.input_tokens is None and observation.output_tokens is None
 

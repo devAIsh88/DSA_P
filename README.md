@@ -139,23 +139,65 @@ python -m alembic current
 python -m alembic check
 ```
 
-Phase 8 result: **353 passed, 1 opt-in test skipped**. Normal pytest uses isolated databases, fake execution, MockTutorProvider and Streamlit AppTest, with no live Gemini/Judge0 calls. Acceptance coverage includes the primary loop, assistance reporting without mastery changes, provider failures, recovery and privacy.
+Current offline result: **462 passed, 1 opt-in test skipped** (2026-10-05). Normal pytest uses isolated databases, fake execution, MockTutorProvider and Streamlit AppTest, with no live Gemini/Judge0 calls. Acceptance coverage includes the primary loop, assistance reporting without mastery changes, provider failures, recovery and privacy.
 
-Alembic remains **`20261003_0006`**; Phase 8 adds no migration. Local provisioning passed twice, with zero new rows on the second run. Disposable localhost HTTP smoke verification using fake providers passed. Manual browser visual verification remains recommended; no visual pass is claimed.
+Alembic is **`20261003_0007`** with no schema drift; Phase 9 adds only evaluation history. Phase 8 added no migration. Local provisioning passed twice, with zero new rows on the second run. Disposable localhost HTTP smoke verification using fake providers passed. Manual browser visual verification remains recommended; no visual pass is claimed.
+
+## Phase 9 offline tutor evaluation
+
+The offline foundation is complete; **no production tutor model has been selected**. The same Git-versioned 25-case suite covers hints (all six levels), diagnosis, reasoning, explanation and understanding evaluation. Benchmark inputs are authored standalone fixtures, not production learner history or hidden tests. Understanding-question generation remains deterministic application behavior.
+
+### Offline run and planning
+
+```powershell
+python -m scripts.run_tutor_benchmark run --dry-run
+python -m scripts.run_tutor_benchmark run --suite benchmarks/tutor/v1/suite.json --suite-version v1 --candidate synthetic-good --candidate synthetic-bad
+```
+
+Dry-run validates and prints a plan without constructing providers or opening a database. The normal run defaults to the two deterministic **synthetic harness candidates** and persists only evaluation tables in a guarded local/dev database. It does not need a model API key, execute learner code or modify learner events/state/recommendations. Synthetic oracle/contrast outputs are not real-model claims or human quality evidence.
+
+Optional `--case CASE_ID` selects one case. `--resume-run RUN_UUID` requires one named candidate and the exact original suite/selection/controls/pricing/Git checkpoint, then skips committed results. Changed code or definitions require a new run; concurrent dispatch of the same unfinished run is unsupported. Never rewrite a published commit to resume it.
+
+### Comparison and human review
+
+```powershell
+python -m scripts.run_tutor_benchmark compare --group-id GROUP_UUID
+python -m scripts.run_tutor_benchmark export --group-id GROUP_UUID --output C:\Temp\tutor-review.json
+python -m scripts.run_tutor_benchmark review --input C:\Temp\one-review.json
+```
+
+Use an existing writable directory and a new export filename. Export includes the versioned rubric, authored case inputs/criteria, validated outputs and per-result review templates. Copy one template into a review JSON file: use a pseudonymous `reviewer_label`, score every applicable dimension **0-4**, and keep non-applicable dimensions `null`. Append through `review`; later ratings from the same reviewer affect reporting without rewriting prior reviews. This is local human review, not authenticated reviewer identity or LLM grading.
+
+Comparison reports task/dimension counts and coverage, schema reliability, gold-label/literal indicators, human ratings, failures, median latency and p95 only for at least 20 observations. Subjective scores start `UNREVIEWED`; missing values are not zero-filled. Literal checks do not prove safety or technical correctness. There is no composite score or automatic winner. Hint dependency, learner-state quality, recommendation quality, retention and personalization gain need separate learner/system experiments.
+
+### Accounting and future live execution
+
+Optional `--pricing FILE.json` accepts a bounded JSON list of PricingSnapshot records: version, effective_at, provider, model_id, accounting_basis, input/output USD rates per million tokens and synthetic flag. Rates are explicit snapshots, not bundled market prices. Cost requires compatible reported input/output usage; missing or incomplete retry accounting leaves cost unavailable. Mixed token bases are not summed. The current Gemini adapter has no usage hook, so its benchmark cost may remain unknown.
+
+Future live execution requires separate candidate/budget authorization and all CLI gates. Only the Gemini adapter is registered today; other providers need equivalent prompt/schema/transport controls before registration. Example **for a later authorized run only**, substituting explicit candidate IDs:
+
+```powershell
+python -m scripts.run_tutor_benchmark run --live --candidate gemini:MODEL_A --candidate gemini:MODEL_B --suite benchmarks/tutor/v1/suite.json --suite-version v1 --max-calls 50 --timeout-seconds 30 --acknowledge-live-cost
+```
+
+The runner requires a clean identifiable Git checkpoint. The maximum-call budget includes configured retries; SDK retries are disabled for evaluation. A warning precedes live invocation; cost acknowledgment does not select a model. Adding `--dry-run` to a fully gated live command plans without opening the database or reading provider credentials. No external candidates are constructed without `--live`. No live commands were executed during offline implementation.
+
+A production choice remains a human decision after at least two real comparable complete runs, applicable human reviews, reliability/latency evidence and consideration of safety failures and available/explicitly unknown cost. Existing Gemini availability remains externally blocked. No production model/configuration is changed by the evaluator.
 
 ## Repository layout and next work
 
 ```text
 app/          FastAPI routes, schemas, services, providers and ORM entities
 frontend/     Streamlit views/sections, typed HTTP client and session state
-scripts/      Explicit demo provisioning
+scripts/      Explicit demo provisioning and evaluation CLI
+benchmarks/   Versioned tutor cases and human rubric
 config/       Versioned learner-model and recommendation configuration
 migrations/   Alembic revisions
 tests/        Offline backend, UI and acceptance tests
 docs/         Architecture, active plan, status and development log
 ```
 
-Read `AGENTS.md`, `docs/PROJECT_STATUS.md`, `docs/plans/CURRENT_IMPLEMENTATION_PLAN.md` and `docs/architecture/PHASE8_UI_CONTRACT.md` before further work. Phase 8 is complete; Phase 9 readiness/evaluation architecture is next and its implementation requires separate authorization.
+Read `AGENTS.md`, `docs/PROJECT_STATUS.md`, `docs/plans/CURRENT_IMPLEMENTATION_PLAN.md` and `docs/architecture/PHASE8_UI_CONTRACT.md` before further work. Phase 9 offline evaluation is complete under `docs/architecture/PHASE9_EVALUATION_CONTRACT.md`; real multi-model runs, human review and production selection remain pending candidate/budget acceptance. No later-phase implementation is authorized.
 
 Deferred: multi-skill mastery, retention/error projections, recommendation-quality evaluation, custom-input execution, RAG, fine-tuning, production authentication and deployment. Adaptive-policy optimality and successful live-model validation are not claimed.
 

@@ -142,6 +142,8 @@ async def invoke_case(provider: TutorProvider, case: BenchmarkCase, candidate: E
         accounting = None
     if accounting is not None and accounting.scope == "all_attempts" and accounting.attempt_count != attempts:
         accounting = None
+    if accounting is not None and accounting.scope == "invocation" and accounting.attempt_count != 1:
+        accounting = None
     return EvaluationObservation(
         case_id=case.case_id, task_type=case.task_type, request_digest=request_digest(case),
         outcome=outcome, structured_output=output, automatic_metrics=metrics,

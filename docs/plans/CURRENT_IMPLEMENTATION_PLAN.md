@@ -1,6 +1,6 @@
 # Current Implementation Plan
 
-This plan records completed implementation and the next development boundaries. Phase 8 is complete; Phase 6 live provider verification remains externally blocked. Product PRD v0.3 (`DEV Placement OS.docx`) governs long-term direction; Python MVP Implementation PRD v0.1 governs MVP scope and order. Phase 4A/4B split its learning-event and learner-model work without changing the sequence. Frozen implementation contracts are in `docs/architecture/`; `LEARNER_EVIDENCE_AND_STATE.md` remains the evidence/state boundary. Architecture acceptance does not itself begin implementation.
+This plan records completed implementation and the next development boundaries. Phase 9 offline evaluation foundation is complete; real comparisons and Phase 6 live provider verification remain pending. Product PRD v0.3 (`DEV Placement OS.docx`) governs long-term direction; Python MVP Implementation PRD v0.1 governs MVP scope and order. Phase 4A/4B split its learning-event and learner-model work without changing the sequence. Frozen implementation contracts are in `docs/architecture/`; `LEARNER_EVIDENCE_AND_STATE.md` remains the evidence/state boundary. Architecture acceptance does not itself begin implementation.
 
 ## Current State
 
@@ -15,7 +15,7 @@ This plan records completed implementation and the next development boundaries. 
 
 ## Next Objective
 
-Active objective: implement the Phase 9 offline evaluation foundation under `docs/architecture/PHASE9_EVALUATION_CONTRACT.md`: versioned cases/rubric, provider-neutral harness, evaluation-only persistence, review and comparison. No live/paid model calls or production selection are authorized. Preserve Phase 7 rules, Phase 4B mastery and immutable learner evidence. Empirical learner outcomes and real multi-model comparison remain pending; manual Phase 8 browser verification remains recommended.
+The Phase 9 offline foundation is implemented under `docs/architecture/PHASE9_EVALUATION_CONTRACT.md`. Next: accept candidate providers/models and an API/cost budget, run comparable real experiments, complete human rubric review and assess selection readiness. No live/paid model calls, production selection or later-phase implementation are authorized by the completed offline run. Preserve Phase 7 rules, Phase 4B mastery and immutable learner evidence. Empirical learner outcomes remain a separate validation task; manual Phase 8 browser verification remains recommended.
 
 Phase 4A supplies persistent evidence, Phase 4B v1 supplies binary single-skill BKT and assisted-activity reporting, Phase 6 supplies bounded tutor flows, and Phase 7 supplies deterministic adaptive decisions. Retry opt-in Gemini verification later; the external provider blocker did not block Phase 7 completion. Tutor quality/safety validation remains necessary before production use. Preserve the full product flow: Problem → Attempt → Reasoning / learner actions → Submission → Execution → Deterministic Evaluation → Learning Event / Session Vault → Learner-State Update → Adaptive Decision → Next Activity.
 
@@ -69,6 +69,15 @@ After v1 reporting, define mistake and retention signals from validated evidence
 - Safe URL IDs plus backend reads restore committed Attempts, reasoning, tutor content and latest Submission/results. Session drafts/operation keys are transient; no automatic POST replay or resubmission of saved understanding answers. Gemini failure leaves the coding/progress/recommendation loop usable.
 - Verification: 26 backend tests, 32 provisioning tests, 21 foundation tests and 11 AppTest scenarios; full suite 353 passed, 1 skipped. Disposable localhost HTTP and server health checks passed; browser automation was unavailable, so visual/keyboard review remains recommended. No live Gemini/Judge0 calls or new migration.
 - Estimated mastery is not certainty. Unsupported retention/error/readiness metrics, multi-skill mastery, policy-quality claims, authentication, custom-input execution and production UI remain deferred.
+
+## Phase 9 - Evaluation foundation (offline complete)
+
+- Git-versioned `benchmarks/tutor/v1/` contains 25 cases across all five TutorProvider capabilities and a ten-dimension anchored human rubric. Strict input/output validation, canonical hashes, prompt/schema/control/Git identities and fresh request copies protect reproducibility and fair comparison.
+- Provider-neutral invocation has bounded timeout/retry behavior and safe failure outcomes. Two synthetic oracle/contrast candidates exercise the harness; their results cannot qualify for production selection. Future external adapters require explicit live gates; only Gemini is currently registered, with evaluation-only SDK retry/temperature overrides preserving normal tutor defaults.
+- Migration `20261003_0007` adds only EvaluationRun, EvaluationResult and EvaluationReview. Plans, results and reviews are immutable through normal ORM/services; controlled completion and explicit exact-plan resume retain committed results. There are no learner foreign keys or learner-state/event/recommendation writes.
+- `python -m scripts.run_tutor_benchmark` supports offline run, dry-run, compare, export and review. Compare per dimension/coverage; missing tokens/cost remain null and mixed accounting bases are not summed. Literal/gold checks are indicators, not objective pedagogical quality. Human scores remain distinct and unreviewed until explicitly supplied; no composite winner or production-config mutation exists.
+- Verification on 2026-10-05: 109 focused evaluation tests; full suite **462 passed, 1 skipped** with no external model/Judge0 calls. Local PostgreSQL persisted two 25-case synthetic runs, comparison/export passed, and learner row counts stayed unchanged. Migration upgrade/check and disposable-schema downgrade/re-upgrade passed.
+- Real comparable candidates, human quality review and production selection are pending. Hint-dependency behavior, retention, mastery-estimation quality, adaptive recommendation quality and personalization gain require separate learner/system experiments. No judge calls or later-phase implementation.
 
 ## Deferred Work
 

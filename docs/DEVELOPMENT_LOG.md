@@ -400,6 +400,45 @@ This is a milestone-based engineering history. Append new entries in chronologic
 
 - Implement and verify offline benchmark definitions, harness, persistence, review and comparison; keep real candidates and selection pending.
 
+## 2026-10-05 - Phase 9 offline evaluation foundation completion
+
+### Completed
+
+- Added `benchmarks/tutor/v1/`: 25 standalone cases across hints, diagnosis, reasoning, explanation and understanding, with explicit gold/literal criteria and a ten-dimension anchored human rubric.
+- Added strict provider-neutral contracts/loading/invocation, fresh input copies, bounded failure/retry handling, safe output validation and two clearly synthetic oracle/contrast candidates. No learner code execution or live model calls.
+- Added evaluation-only plans/results/reviews, exact-plan resume, human-review import/export, explicit pricing snapshots and per-dimension comparison through `python -m scripts.run_tutor_benchmark`.
+
+### Issues Encountered
+
+- Continuation after the date changed exposed two existing Phase 8 acceptance failures: Attempt fixture clocks were frozen, recommendation creation was not. Aligned test clocks without changing application semantics or weakening assertions.
+- Review corrected an explicit-zero timeout defaulting bug, excluded incomplete retry usage and mixed token bases from totals, and added a pre-invocation cost warning for the future live path.
+
+### Decisions
+
+- Automatic schema/gold/literal indicators remain distinct from human quality ratings and learner outcomes. Missing accounting is unavailable, not estimated; no composite winner or production selection occurs.
+- Three evaluation-only tables have no learner foreign keys. Plans/results/reviews are immutable in normal ORM/services; direct privileged SQL and concurrent dispatch of one unfinished run remain outside MVP guarantees.
+- Future live candidates require a clean recorded Git checkpoint, explicit suite/version/controls/call budget and cost acknowledgment. Gemini's evaluation-only SDK retry/temperature overrides preserve normal tutor defaults. Only Gemini is registered for future live execution; additional adapters require equivalent contracts.
+- Tutor benchmark results cannot establish retention, mastery-estimation quality, hint-dependency behavior, recommendation quality or personalization gain. These empirical studies and actual model selection remain pending.
+
+### Verification
+
+- Focused evaluation suites: **109 passed** (62 definitions/invocation, 25 persistence, 22 CLI/comparison/review). Full offline suite: **462 passed, 1 opt-in Judge0 test skipped, 8 existing warnings**. Zero live Gemini/OpenAI/Anthropic/Judge0 calls; no new dependencies.
+- Migration `20261003_0007` follows `20261003_0006`; local upgrade succeeded and Alembic detected no drift. Upgrade/downgrade/re-upgrade passed in a disposable PostgreSQL schema; its DDL was rolled back without changing learner data.
+- Clean-checkpoint PostgreSQL CLI smoke group `e8de9213-4274-45bb-a5b7-07b4d1b5a5bd` persisted two synthetic runs and 50 results. Comparison/export passed; learner row counts were unchanged. Both had valid schemas; the oracle matched authored labels/literals while the contrast failed label checks and triggered literal flags. These are harness checks, not real-model quality claims. Cost remained unavailable and human ratings UNREVIEWED in those smoke runs.
+- Isolated tests exercised appended sample human reviews, coverage/missing values, exact-plan resume, rollback, FK/uniqueness/immutability, malformed/unsafe output, provider isolation and preservation of every learner table. Generated exports stayed temporary and were not committed.
+
+### Git
+
+- `c96073d` - `docs: freeze Phase 9 evaluation architecture`.
+- `55b39fb` - `feat(eval): add versioned tutor benchmark foundation`.
+- `6a75b37` - `feat(eval): persist isolated benchmark results`.
+- `d9167f3` - `feat(eval): add offline benchmark CLI and comparison`.
+- Verified checkpoints were pushed to `origin/main`; final cost-safety/documentation closeout is recorded by `fix(eval): finish cost safety and evaluation closeout`. Git supplies that commit's exact revision.
+
+### Next
+
+- Accept candidate providers/models and an API/cost budget before real comparable runs; complete human rubric review before considering production selection. Existing live Gemini availability remains unresolved. No later-phase implementation.
+
 ## Document Roles
 
 - `docs/PROJECT_STATUS.md` records current truth.

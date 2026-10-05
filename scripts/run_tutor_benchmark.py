@@ -6,6 +6,7 @@ import argparse
 import asyncio
 import json
 import subprocess
+import sys
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -68,6 +69,12 @@ def _emit(value, output: Path | None = None) -> None:
         print("Evaluation export written to the explicitly selected file.")
     else:
         print(serialized)
+
+
+def _warn_live_cost(maximum_invocations: int) -> None:
+    print(f"LIVE experiment: up to {maximum_invocations} external invocations. "
+          "Charges may apply; total cost is unknown without complete reported tokens and compatible pricing. "
+          "Explicit cost acknowledgment does not select a production model.", file=sys.stderr)
 
 
 def parser() -> argparse.ArgumentParser:
@@ -156,6 +163,8 @@ async def _run(arguments) -> int:
     if arguments.dry_run:
         _emit(plan)
         return 0
+    if arguments.live:
+        _warn_live_cost(worst_case_calls)
     factory = create_evaluation_session_factory()
     group_id = arguments.group_id or uuid4()
     if arguments.resume_run:
