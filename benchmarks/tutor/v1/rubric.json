@@ -1,0 +1,147 @@
+{
+  "rubric_version": "tutor-rubric-v1",
+  "dimensions": [
+    {
+      "name": "technical_correctness",
+      "task_types": [
+        "hint",
+        "diagnosis",
+        "reasoning",
+        "explanation",
+        "understanding"
+      ],
+      "anchors": {
+        "0": "Central technical falsehood or harmful advice.",
+        "1": "Major errors dominate useful content.",
+        "2": "Partly correct with important omissions.",
+        "3": "Correct with minor omissions.",
+        "4": "Correct, justified and suitable for the stated task."
+      }
+    },
+    {
+      "name": "response_policy_compliance",
+      "task_types": [
+        "hint",
+        "diagnosis",
+        "reasoning",
+        "explanation",
+        "understanding"
+      ],
+      "anchors": {
+        "0": "Violates core authority/safety boundary.",
+        "1": "Substantial instruction or scope violation.",
+        "2": "Mostly compliant with a meaningful policy issue.",
+        "3": "Compliant with a minor presentation issue.",
+        "4": "Respects deterministic evidence, scope and response limits."
+      }
+    },
+    {
+      "name": "personalization_relevance",
+      "task_types": [
+        "hint",
+        "diagnosis",
+        "reasoning",
+        "explanation",
+        "understanding"
+      ],
+      "anchors": {
+        "0": "Contradicts or ignores supplied learner context.",
+        "1": "Mostly unrelated generic guidance.",
+        "2": "Uses some context but ignores key facts.",
+        "3": "Relevant with minor missed opportunities.",
+        "4": "Precisely addresses supplied context without invented history."
+      }
+    },
+    {
+      "name": "diagnosis_accuracy",
+      "task_types": [
+        "diagnosis"
+      ],
+      "anchors": {
+        "0": "Invents error in correct case or contradicts evidence.",
+        "1": "Primary diagnosis wrong.",
+        "2": "Finds part of issue but misses cause.",
+        "3": "Accurate main cause with minor imprecision.",
+        "4": "Matches evidence and explains authored diagnostic distinction."
+      }
+    },
+    {
+      "name": "hint_usefulness",
+      "task_types": [
+        "hint"
+      ],
+      "anchors": {
+        "0": "Misleading or unusable.",
+        "1": "Little educational value.",
+        "2": "Useful partly with substantial gaps.",
+        "3": "Useful at requested level.",
+        "4": "Focused, correct guidance advances the next reasoning step."
+      }
+    },
+    {
+      "name": "minimum_intervention",
+      "task_types": [
+        "hint"
+      ],
+      "anchors": {
+        "0": "Complete solution where only nudge allowed.",
+        "1": "Much more intervention than permitted.",
+        "2": "Meaningful over/under-intervention.",
+        "3": "Appropriate level with minor excess.",
+        "4": "Exactly needed intervention for authorized level."
+      }
+    },
+    {
+      "name": "solution_leakage",
+      "task_types": [
+        "hint"
+      ],
+      "anchors": {
+        "0": "Prohibited full solution or equivalent implementation.",
+        "1": "Substantial prohibited solution detail.",
+        "2": "Borderline over-disclosure.",
+        "3": "No material leakage; minor excess.",
+        "4": "No prohibited leakage; authorized Level6 is not penalized."
+      }
+    },
+    {
+      "name": "reasoning_feedback",
+      "task_types": [
+        "reasoning"
+      ],
+      "anchors": {
+        "0": "Misrepresents reasoning or asserts unsupported certainty.",
+        "1": "Mostly incorrect or unrelated.",
+        "2": "Partly useful but misses central issue.",
+        "3": "Accurate with actionable clarification.",
+        "4": "Grounded feedback on invariants, justification and missing information."
+      }
+    },
+    {
+      "name": "explanation_quality",
+      "task_types": [
+        "explanation"
+      ],
+      "anchors": {
+        "0": "Incorrect or falsely claims success.",
+        "1": "Major gaps prevent understanding.",
+        "2": "Partly explains but misses correctness/complexity.",
+        "3": "Clear and correct with minor gaps.",
+        "4": "Connects recorded outcome, invariant, complexity and edge cases."
+      }
+    },
+    {
+      "name": "understanding_assessment",
+      "task_types": [
+        "understanding"
+      ],
+      "anchors": {
+        "0": "Contradicts answer or turns assessment into mastery.",
+        "1": "Mostly inaccurate.",
+        "2": "Partly accurate but misses substantial omission/error.",
+        "3": "Correct advisory assessment with useful feedback.",
+        "4": "Grounded distinctions among correct, partial, wrong and insufficient answers."
+      }
+    }
+  ]
+}

@@ -69,9 +69,18 @@ _HINT_INSTRUCTIONS = {
 class GeminiTutorProvider(TutorProvider):
     """Structured Gemini responses with local validation and bounded requests."""
 
-    def __init__(self, settings: Settings, client_factory: Callable[..., object] | None = None) -> None:
+    def __init__(self, settings: Settings, client_factory: Callable[..., object] | None = None,
+                 *, sdk_retry_attempts: int | None = None, temperature: float | None = None) -> None:
+        if sdk_retry_attempts is not None and (type(sdk_retry_attempts) is not int or not 1 <= sdk_retry_attempts <= 10):
+            raise ValueError("SDK retry attempts must be bounded positive integers")
+        if temperature is not None and not 0 <= temperature <= 2:
+            raise ValueError("Temperature must be between zero and two")
         self._settings = settings
         self._client_factory = client_factory or genai.Client
+        # Evaluation may explicitly control SDK retries/temperature. Leaving
+        # these unset preserves the normal Phase 6 adapter configuration.
+        self._sdk_retry_attempts = sdk_retry_attempts
+        self._temperature = temperature
 
     async def _generate(
         self, task: str, instruction: str, data: dict[str, object],
@@ -84,9 +93,15 @@ class GeminiTutorProvider(TutorProvider):
             raise TutorProviderError("Tutor input exceeds configured bound")
         client = None
         try:
+            http_options = {"timeout": int(self._settings.tutor_timeout_seconds * 1000)}
+            if self._sdk_retry_attempts is not None:
+                http_options["retry_options"] = types.HttpRetryOptions(attempts=self._sdk_retry_attempts)
+            generation_options = {}
+            if self._temperature is not None:
+                generation_options["temperature"] = self._temperature
             client = self._client_factory(
                 api_key=self._settings.google_api_key,
-                http_options=types.HttpOptions(timeout=int(self._settings.tutor_timeout_seconds * 1000)),
+                http_options=types.HttpOptions(**http_options),
             )
             response = await asyncio.wait_for(
                 client.aio.models.generate_content(
@@ -96,6 +111,7 @@ class GeminiTutorProvider(TutorProvider):
                         system_instruction=f"{_SYSTEM_BASE} {instruction}",
                         response_mime_type="application/json", response_schema=schema,
                         max_output_tokens=self._settings.tutor_max_output_tokens,
+                        **generation_options,
                     ),
                 ),
                 timeout=self._settings.tutor_timeout_seconds + 1,

@@ -1,0 +1,818 @@
+{
+  "suite_id": "dev-placement-tutor",
+  "version": "v1",
+  "rubric_version": "tutor-rubric-v1",
+  "cases": [
+    {
+      "case_id": "hint-level-1",
+      "version": "v1",
+      "task_type": "hint",
+      "difficulty": "Medium",
+      "tags": [
+        "hint-ladder",
+        "order-sensitive"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Longest Increasing Subsequence",
+          "problem_description": "Find the longest strictly increasing subsequence length while preserving input order.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": "WRONG_ANSWER",
+          "reasoning_text": "I sorted first; I am unsure whether order matters.",
+          "source_code": "# Draft: determine what earlier positions to track",
+          "prior_hint_levels": []
+        },
+        "level": 1
+      },
+      "expected_labels": {},
+      "required_content": [
+        "preserve order"
+      ],
+      "forbidden_content": [
+        "dynamic programming",
+        "def solve(",
+        "dp = [1]"
+      ],
+      "review_guidance": "Offer a small nudge about subsequence order. Do not name the full algorithm or provide code."
+    },
+    {
+      "case_id": "hint-level-2",
+      "version": "v1",
+      "task_type": "hint",
+      "difficulty": "Medium",
+      "tags": [
+        "hint-ladder",
+        "order-sensitive"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Longest Increasing Subsequence",
+          "problem_description": "Find the longest strictly increasing subsequence length while preserving input order.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": "WRONG_ANSWER",
+          "reasoning_text": "I sorted first; I am unsure whether order matters.",
+          "source_code": "# Draft: determine what earlier positions to track",
+          "prior_hint_levels": []
+        },
+        "level": 2
+      },
+      "expected_labels": {},
+      "required_content": [
+        "previous choices"
+      ],
+      "forbidden_content": [
+        "def solve(",
+        "dp = [1]"
+      ],
+      "review_guidance": "Offer one observation, not the complete recurrence or implementation."
+    },
+    {
+      "case_id": "hint-level-3",
+      "version": "v1",
+      "task_type": "hint",
+      "difficulty": "Medium",
+      "tags": [
+        "hint-ladder",
+        "order-sensitive"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Longest Increasing Subsequence",
+          "problem_description": "Find the longest strictly increasing subsequence length while preserving input order.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": "WRONG_ANSWER",
+          "reasoning_text": "I sorted first; I am unsure whether order matters.",
+          "source_code": "# Draft: determine what earlier positions to track",
+          "prior_hint_levels": []
+        },
+        "level": 3
+      },
+      "expected_labels": {},
+      "required_content": [
+        "dynamic programming"
+      ],
+      "forbidden_content": [
+        "def solve(",
+        "dp = [1]"
+      ],
+      "review_guidance": "Name a concept or invariant and distinguish subsequence from sorted order. No full implementation."
+    },
+    {
+      "case_id": "hint-level-4",
+      "version": "v1",
+      "task_type": "hint",
+      "difficulty": "Medium",
+      "tags": [
+        "hint-ladder",
+        "order-sensitive"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Longest Increasing Subsequence",
+          "problem_description": "Find the longest strictly increasing subsequence length while preserving input order.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": "WRONG_ANSWER",
+          "reasoning_text": "I sorted first; I am unsure whether order matters.",
+          "source_code": "# Draft: determine what earlier positions to track",
+          "prior_hint_levels": []
+        },
+        "level": 4
+      },
+      "expected_labels": {},
+      "required_content": [
+        "best length ending"
+      ],
+      "forbidden_content": [
+        "def solve("
+      ],
+      "review_guidance": "Explain the state and recurrence direction at high level without complete code."
+    },
+    {
+      "case_id": "hint-level-5",
+      "version": "v1",
+      "task_type": "hint",
+      "difficulty": "Medium",
+      "tags": [
+        "hint-ladder",
+        "order-sensitive"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Longest Increasing Subsequence",
+          "problem_description": "Find the longest strictly increasing subsequence length while preserving input order.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": "WRONG_ANSWER",
+          "reasoning_text": "I sorted first; I am unsure whether order matters.",
+          "source_code": "# Draft: determine what earlier positions to track",
+          "prior_hint_levels": []
+        },
+        "level": 5
+      },
+      "expected_labels": {},
+      "required_content": [
+        "initialize lengths to one",
+        "strictly smaller"
+      ],
+      "forbidden_content": [
+        "def solve("
+      ],
+      "review_guidance": "Discuss initialization and transitions short of full solution; address duplicates."
+    },
+    {
+      "case_id": "hint-level-6",
+      "version": "v1",
+      "task_type": "hint",
+      "difficulty": "Medium",
+      "tags": [
+        "hint-ladder",
+        "order-sensitive"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Longest Increasing Subsequence",
+          "problem_description": "Find the longest strictly increasing subsequence length while preserving input order.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": "WRONG_ANSWER",
+          "reasoning_text": "I sorted first; I am unsure whether order matters.",
+          "source_code": "# Draft: determine what earlier positions to track",
+          "prior_hint_levels": [
+            5
+          ]
+        },
+        "level": 6
+      },
+      "expected_labels": {},
+      "required_content": [
+        "O(n²)",
+        "O(n)"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "Prior Level 5 authorizes full explanation/solution. Complexity must be accurate."
+    },
+    {
+      "case_id": "diagnosis-correct",
+      "version": "v1",
+      "task_type": "diagnosis",
+      "difficulty": "Medium",
+      "tags": [
+        "diagnosis",
+        "correct"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Maximum Subarray",
+          "problem_description": "Return maximum sum of a nonempty contiguous subarray.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": "ACCEPTED",
+          "reasoning_text": "Keep best ending here and best overall.",
+          "source_code": "best = running = numbers[0]\nfor value in numbers[1:]:\n    running = max(value, running + value)\n    best = max(best, running)"
+        }
+      },
+      "expected_labels": {
+        "misconception_category": null
+      },
+      "required_content": [
+        "no demonstrated mistake"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "Do not invent a misconception from accepted deterministic evidence or claim mastery."
+    },
+    {
+      "case_id": "diagnosis-implementation",
+      "version": "v1",
+      "task_type": "diagnosis",
+      "difficulty": "Easy",
+      "tags": [
+        "diagnosis",
+        "implementation"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Reverse String",
+          "problem_description": "Use a stack to reverse a string.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": "WRONG_ANSWER",
+          "reasoning_text": "The stack stores the characters.",
+          "source_code": "stack = list(text)\nresult = ''.join(stack)"
+        }
+      },
+      "expected_labels": {
+        "misconception_category": "IMPLEMENTATION_ERROR"
+      },
+      "required_content": [
+        "stack",
+        "order"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "The workable approach is implemented without popping the stack; distinguish implementation from pattern selection."
+    },
+    {
+      "case_id": "diagnosis-logical",
+      "version": "v1",
+      "task_type": "diagnosis",
+      "difficulty": "Easy",
+      "tags": [
+        "diagnosis",
+        "logical"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Binary Search",
+          "problem_description": "Search a sorted array and return an index or -1.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": "WRONG_ANSWER",
+          "reasoning_text": "Keep the possible half.",
+          "source_code": "if values[mid] > target:\n    low = mid + 1\nelse:\n    high = mid - 1"
+        }
+      },
+      "expected_labels": {
+        "misconception_category": "LOGICAL_ERROR"
+      },
+      "required_content": [
+        "search interval"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "Branch direction contradicts the search invariant. Explain using only public statement/source/status."
+    },
+    {
+      "case_id": "diagnosis-conceptual",
+      "version": "v1",
+      "task_type": "diagnosis",
+      "difficulty": "Medium",
+      "tags": [
+        "diagnosis",
+        "conceptual"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Shortest Unweighted Path",
+          "problem_description": "Find the minimum edge count between vertices.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": "WRONG_ANSWER",
+          "reasoning_text": "The first DFS path must be shortest.",
+          "source_code": "def visit(node):\n    if node == goal: return depth\n    return visit(first_neighbor)"
+        }
+      },
+      "expected_labels": {
+        "misconception_category": "CONCEPTUAL_ERROR"
+      },
+      "required_content": [
+        "shortest",
+        "breadth-first"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "The explicit misconception is first-found versus shortest path; connect BFS layers to edge count."
+    },
+    {
+      "case_id": "diagnosis-complexity",
+      "version": "v1",
+      "task_type": "diagnosis",
+      "difficulty": "Easy",
+      "tags": [
+        "diagnosis",
+        "complexity"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Duplicate Detection",
+          "problem_description": "Find duplicates with expected linear-time complexity.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": "TIME_LIMIT_EXCEEDED",
+          "reasoning_text": "Compare every pair.",
+          "source_code": "for i in range(len(values)):\n    for j in range(i + 1, len(values)):\n        if values[i] == values[j]: return True"
+        }
+      },
+      "expected_labels": {
+        "misconception_category": "COMPLEXITY_ERROR"
+      },
+      "required_content": [
+        "quadratic",
+        "set"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "Explain visible quadratic complexity and a set without inventing private timing traces or test sizes."
+    },
+    {
+      "case_id": "diagnosis-edge",
+      "version": "v1",
+      "task_type": "diagnosis",
+      "difficulty": "Easy",
+      "tags": [
+        "diagnosis",
+        "edge"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Maximum Value",
+          "problem_description": "Return maximum value or None for an empty sequence.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": "RUNTIME_ERROR",
+          "reasoning_text": "Initialize from the first item.",
+          "source_code": "best = numbers[0]\nfor value in numbers[1:]:\n    best = max(best, value)"
+        }
+      },
+      "expected_labels": {
+        "misconception_category": "EDGE_CASE_ERROR"
+      },
+      "required_content": [
+        "empty"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "The public statement allows emptiness. Identify the missing guard without a fabricated traceback."
+    },
+    {
+      "case_id": "diagnosis-misread",
+      "version": "v1",
+      "task_type": "diagnosis",
+      "difficulty": "Easy",
+      "tags": [
+        "diagnosis",
+        "misread"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Count Distinct Values",
+          "problem_description": "Count distinct values rather than all elements.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": "WRONG_ANSWER",
+          "reasoning_text": "The answer is the input length.",
+          "source_code": "print(len(values))"
+        }
+      },
+      "expected_labels": {
+        "misconception_category": "MISREAD_PROBLEM"
+      },
+      "required_content": [
+        "distinct"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "The learner counted elements, not distinct values. Ground the distinction in the public statement."
+    },
+    {
+      "case_id": "diagnosis-wrong-pattern",
+      "version": "v1",
+      "task_type": "diagnosis",
+      "difficulty": "Medium",
+      "tags": [
+        "diagnosis",
+        "wrong-pattern"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Minimum Coins",
+          "problem_description": "Find minimum coin count for arbitrary positive denominations.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": "WRONG_ANSWER",
+          "reasoning_text": "Largest affordable coin is always optimal.",
+          "source_code": "for coin in sorted(coins, reverse=True):\n    take = amount // coin\n    amount -= take * coin"
+        }
+      },
+      "expected_labels": {
+        "misconception_category": "WRONG_PATTERN"
+      },
+      "required_content": [
+        "greedy",
+        "arbitrary denominations"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "Greedy choice is not valid for all denominations. Explain the pattern mismatch and optimal substructure."
+    },
+    {
+      "case_id": "diagnosis-incomplete",
+      "version": "v1",
+      "task_type": "diagnosis",
+      "difficulty": "Easy",
+      "tags": [
+        "diagnosis",
+        "incomplete"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Binary Search Invariant",
+          "problem_description": "Maintain a correct inclusive search interval.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": "WRONG_ANSWER",
+          "reasoning_text": "Binary search is faster; keep narrowing things.",
+          "source_code": "while low <= high:\n    middle = (low + high) // 2\n    # interval update unspecified"
+        }
+      },
+      "expected_labels": {
+        "misconception_category": "INCOMPLETE_REASONING"
+      },
+      "required_content": [
+        "invariant",
+        "interval"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "Draft and reasoning omit the decisive invariant/update. Missing reasoning is not measured mastery."
+    },
+    {
+      "case_id": "reasoning-sound",
+      "version": "v1",
+      "task_type": "reasoning",
+      "difficulty": "Medium",
+      "tags": [
+        "reasoning",
+        "sound"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Longest Substring Without Repetition",
+          "problem_description": "Explain algorithm correctness and complexity.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": null,
+          "reasoning_text": "Maintain a unique-character window. Remove left characters until the next right character is absent, then extend. Each endpoint moves at most n times: O(n) time and O(n) space.",
+          "source_code": null
+        },
+        "reasoning_text": "Maintain a unique-character window. Remove left characters until the next right character is absent, then extend. Each endpoint moves at most n times: O(n) time and O(n) space."
+      },
+      "expected_labels": {
+        "reasoning_quality": "SOUND"
+      },
+      "required_content": [
+        "window",
+        "linear"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "Invariant and amortized argument are coherent; do not invent an error because code is absent."
+    },
+    {
+      "case_id": "reasoning-partial",
+      "version": "v1",
+      "task_type": "reasoning",
+      "difficulty": "Medium",
+      "tags": [
+        "reasoning",
+        "partial"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Binary Search",
+          "problem_description": "Explain algorithm correctness and complexity.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": null,
+          "reasoning_text": "Compare the middle and discard half; it is logarithmic.",
+          "source_code": null
+        },
+        "reasoning_text": "Compare the middle and discard half; it is logarithmic."
+      },
+      "expected_labels": {
+        "reasoning_quality": "PARTIAL"
+      },
+      "required_content": [
+        "invariant",
+        "termination"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "Credit the high-level approach but identify missing boundaries and termination."
+    },
+    {
+      "case_id": "reasoning-flawed",
+      "version": "v1",
+      "task_type": "reasoning",
+      "difficulty": "Medium",
+      "tags": [
+        "reasoning",
+        "flawed"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Longest Increasing Subsequence",
+          "problem_description": "Explain algorithm correctness and complexity.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": null,
+          "reasoning_text": "Sort, remove duplicates, and count. Sorting cannot affect any subsequence answer.",
+          "source_code": null
+        },
+        "reasoning_text": "Sort, remove duplicates, and count. Sorting cannot affect any subsequence answer."
+      },
+      "expected_labels": {
+        "reasoning_quality": "FLAWED"
+      },
+      "required_content": [
+        "order"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "Sorting changes original order; explain the core logical flaw."
+    },
+    {
+      "case_id": "reasoning-undetermined",
+      "version": "v1",
+      "task_type": "reasoning",
+      "difficulty": "Medium",
+      "tags": [
+        "reasoning",
+        "undetermined"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Maximum Subarray",
+          "problem_description": "Explain algorithm correctness and complexity.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "ACTIVE",
+          "deterministic_status": null,
+          "reasoning_text": "It seems to work when I think about it.",
+          "source_code": null
+        },
+        "reasoning_text": "It seems to work when I think about it."
+      },
+      "expected_labels": {
+        "reasoning_quality": "UNDETERMINED"
+      },
+      "required_content": [
+        "insufficient",
+        "invariant"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "Request justification because evidence is insufficient; do not fabricate a specific diagnosis."
+    },
+    {
+      "case_id": "explanation-solved",
+      "version": "v1",
+      "task_type": "explanation",
+      "difficulty": "Medium",
+      "tags": [
+        "post-attempt",
+        "solved"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Maximum Subarray",
+          "problem_description": "Find the largest nonempty contiguous subarray sum.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "COMPLETED",
+          "deterministic_status": "ACCEPTED",
+          "reasoning_text": "Track best ending here and best overall.",
+          "source_code": "running = max(value, running + value)\nbest = max(best, running)",
+          "attempt_outcome": "SOLVED"
+        }
+      },
+      "expected_labels": {},
+      "required_content": [
+        "invariant",
+        "O(n)",
+        "O(1)"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "Explain the final approach and all-negative edge case; acceptance is not proof of conceptual mastery."
+    },
+    {
+      "case_id": "explanation-gave-up",
+      "version": "v1",
+      "task_type": "explanation",
+      "difficulty": "Medium",
+      "tags": [
+        "post-attempt",
+        "gave-up"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Minimum Coins",
+          "problem_description": "Find minimum coins for arbitrary denominations.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "COMPLETED",
+          "deterministic_status": "WRONG_ANSWER",
+          "reasoning_text": "I tried greedy selection.",
+          "source_code": null,
+          "attempt_outcome": "GAVE_UP"
+        }
+      },
+      "expected_labels": {},
+      "required_content": [
+        "greedy",
+        "dynamic programming"
+      ],
+      "forbidden_content": [
+        "your solution passed"
+      ],
+      "review_guidance": "Explain the missing concept and better approach without claiming the gave-up Attempt passed."
+    },
+    {
+      "case_id": "understanding-correct",
+      "version": "v1",
+      "task_type": "understanding",
+      "difficulty": "Easy",
+      "tags": [
+        "understanding",
+        "correct"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Binary Search",
+          "problem_description": "Search a sorted array for a target.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "COMPLETED",
+          "deterministic_status": "ACCEPTED",
+          "reasoning_text": null,
+          "source_code": null,
+          "attempt_outcome": "SOLVED"
+        },
+        "question": "Explain why binary search works, its time/space complexity, and one important edge case.",
+        "answer_text": "Sorted order lets each comparison retain the possible half. The interval shrinks. Time O(log n), space O(1); empty input returns -1."
+      },
+      "expected_labels": {
+        "answer_quality": "CORRECT"
+      },
+      "required_content": [
+        "invariant",
+        "O(log n)"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "Correctness, complexity and edge case are addressed. Assessment remains advisory."
+    },
+    {
+      "case_id": "understanding-partial",
+      "version": "v1",
+      "task_type": "understanding",
+      "difficulty": "Easy",
+      "tags": [
+        "understanding",
+        "partial"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Binary Search",
+          "problem_description": "Search a sorted array for a target.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "COMPLETED",
+          "deterministic_status": "ACCEPTED",
+          "reasoning_text": null,
+          "source_code": null,
+          "attempt_outcome": "SOLVED"
+        },
+        "question": "Explain why binary search works, its time/space complexity, and one important edge case.",
+        "answer_text": "Discard half each step, so time is O(log n)."
+      },
+      "expected_labels": {
+        "answer_quality": "PARTIALLY_CORRECT"
+      },
+      "required_content": [
+        "space",
+        "edge case"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "Credit time complexity while identifying missing invariant, space and edge case."
+    },
+    {
+      "case_id": "understanding-incorrect",
+      "version": "v1",
+      "task_type": "understanding",
+      "difficulty": "Easy",
+      "tags": [
+        "understanding",
+        "incorrect"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Binary Search",
+          "problem_description": "Search a sorted array for a target.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "COMPLETED",
+          "deterministic_status": "ACCEPTED",
+          "reasoning_text": null,
+          "source_code": null,
+          "attempt_outcome": "SOLVED"
+        },
+        "question": "Explain why binary search works, its time/space complexity, and one important edge case.",
+        "answer_text": "Binary search works on any unsorted array and always takes O(1) time."
+      },
+      "expected_labels": {
+        "answer_quality": "INCORRECT"
+      },
+      "required_content": [
+        "sorted",
+        "O(log n)"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "Correct prerequisite and complexity errors; do not invent execution."
+    },
+    {
+      "case_id": "understanding-undetermined",
+      "version": "v1",
+      "task_type": "understanding",
+      "difficulty": "Easy",
+      "tags": [
+        "understanding",
+        "undetermined"
+      ],
+      "request": {
+        "context": {
+          "problem_title": "Binary Search",
+          "problem_description": "Search a sorted array for a target.",
+          "problem_constraints": "Synthetic standalone task; no execution test bodies.",
+          "attempt_status": "COMPLETED",
+          "deterministic_status": "ACCEPTED",
+          "reasoning_text": null,
+          "source_code": null,
+          "attempt_outcome": "SOLVED"
+        },
+        "question": "Explain why binary search works, its time/space complexity, and one important edge case.",
+        "answer_text": "I do not know how to explain it yet."
+      },
+      "expected_labels": {
+        "answer_quality": "UNDETERMINED"
+      },
+      "required_content": [
+        "insufficient"
+      ],
+      "forbidden_content": [
+        "guaranteed mastery"
+      ],
+      "review_guidance": "Distinguish absent justification from a demonstrated specific misconception."
+    }
+  ]
+}

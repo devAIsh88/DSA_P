@@ -21,7 +21,7 @@ from app.schemas.attempt import AttemptComplete, AttemptStart, ReasoningCreate
 from app.schemas.execution import ExecutionRequest, ExecutionResult, ExecutionStatus
 from app.schemas.learning_event import LearningEventType
 from app.schemas.submission import SubmissionCreate
-from app.services import attempt_service, learning_event_service
+from app.services import attempt_service, learning_event_service, recommendation_service
 from app.services.execution_service import ExecutionProvider
 from app.services.submission_service import create_submission
 
@@ -149,5 +149,8 @@ def create_adaptive_database(monkeypatch) -> tuple[AdaptiveDatabase, object]:
         db.commit()
     monkeypatch.setattr(attempt_service, "datetime", FrozenClock)
     monkeypatch.setattr(learning_event_service, "datetime", FrozenClock)
+    # Recommendation creation/consumption must share the Attempt fixture clock;
+    # otherwise lifecycle constraints start failing as the real date advances.
+    monkeypatch.setattr(recommendation_service, "datetime", FrozenClock)
     FrozenClock.value = NOW
     return AdaptiveDatabase(factory), engine
