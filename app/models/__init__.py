@@ -1,4 +1,5 @@
 from app.models.attempt import Attempt
+from app.models.evaluation import EvaluationReview, EvaluationResult, EvaluationRun
 from app.models.learning_event import LearningEvent
 from app.models.problem import Problem
 from app.models.problem_skill import ProblemSkill
@@ -10,4 +11,4 @@ from app.models.submission import Submission
 from app.models.test_result import TestResult
 from app.models.user import User
 
-__all__ = ["Attempt", "LearningEvent", "Problem", "ProblemSkill", "Recommendation", "Skill", "SkillState", "Submission", "TestCase", "TestResult", "User"]
+__all__ = ["Attempt", "EvaluationReview", "EvaluationResult", "EvaluationRun", "LearningEvent", "Problem", "ProblemSkill", "Recommendation", "Skill", "SkillState", "Submission", "TestCase", "TestResult", "User"]
